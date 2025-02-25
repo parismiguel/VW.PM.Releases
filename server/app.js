@@ -6,6 +6,8 @@ const app = express();
 const basicAuth = require("express-basic-auth");
 const authenticateToken = require('./middleware/authenticateToken');
 
+require('dotenv').config();
+
 // MongoDB Connection
 mongoose
   .connect("mongodb://localhost:27017/uprise-releases", {
@@ -18,6 +20,11 @@ mongoose
 // Middleware
 app.use(express.json());
 app.use(cors({ origin: "http://localhost:3000" })); // Restringir a frontend local
+
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 
 // Log all incoming requests and their headers
 app.use((req, res, next) => {
@@ -54,16 +61,14 @@ app.post('/api/login', (req, res) => {
 
 // Protegemos solo las rutas de releases con autenticación básica
 app.use("/api/releases", basicAuth({
-  users: { admin: "password" },
+  users: { [process.env.BASIC_AUTH_USER]: process.env.BASIC_AUTH_PASS },
   challenge: true,
 }), require("./routes/releases"));
 
 // Serve static files from client build in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../client/build")));
-  app.get("*", (req, res) =>
-    res.sendFile(path.join(__dirname, "../client/build/index.html"))
-  );
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/build')));
+  app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../client/build/index.html')));
 }
 
 // Start Server

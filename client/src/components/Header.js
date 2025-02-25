@@ -1,9 +1,26 @@
 import React, { useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../AuthContext";
+import {
+  Button,
+} from "@mui/material";
+import LogoutIcon from '@mui/icons-material/Logout';
+import LoginIcon from '@mui/icons-material/Login';
 import "./Header.css";
 
 function Header() {
   const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  // const handleLogout = () => {
+  //   localStorage.removeItem("auth"); // Clear authentication token
+  //   navigate("/login"); // Redirect to login page
+  // };
+
+  const handleLogin = () => {
+    navigate("/login"); // Redirect to login page
+  };
+
   return (
     <header className='header'>
       <h1>VW.PM.Releases</h1>
@@ -16,12 +33,33 @@ function Header() {
               className='avatar'
             />
             <span>{user.username}</span>
-            <button onClick={logout}>Logout</button>
+            <Button
+            variant='outlined'
+            color='error'
+            startIcon={<LogoutIcon />}
+            onClick={logout}
+            sx={{
+              borderRadius: "20px", // Rounded corners
+              textTransform: "none", // Prevent uppercase text
+              fontWeight: "bold", // Bold text
+            }}
+          >
+            Logout
+          </Button>
           </div>
         ) : (
-          <div className='user-not-logged-in'>
-            <a href='/login'>Login</a>
-          </div>
+          <Button
+            variant='outlined'
+            startIcon={<LoginIcon />}
+            onClick={handleLogin}
+            sx={{
+              borderRadius: "20px", // Rounded corners
+              textTransform: "none", // Prevent uppercase text
+              fontWeight: "bold", // Bold text
+            }}
+          >
+            Login
+          </Button>
         )}
       </div>
     </header>

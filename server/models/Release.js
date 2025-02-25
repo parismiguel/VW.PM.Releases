@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const ReleaseSchema = new mongoose.Schema({
   product_name: { type: String, required: true },
@@ -9,36 +9,51 @@ const ReleaseSchema = new mongoose.Schema({
   deployment_duration: String,
   downtime: String,
   resources_responsible: String,
-  status: { type: String, default: 'Draft' },
-  systems_impacted: [{
-    system_name: String,
-    environment: String
-  }],
-  target_servers: [{
-    server_name: String,
-    environment: String
-  }],
-  tasks: [{
-    task_type: String, // e.g., Pre-requisite, Pre-Deployment, etc.
-    description: String,
-    owner: String,
-    status: String
-  }],
-  issues: [{
-    jira_item: String,
-    sf_solution: String,
-    comments: String
-  }],
-  risks: [{
-    risk: String,
-    remediation: String
-  }],
-  approvals: [{
-    team: String,
-    primary_approver: String,
-    status: String,
-    approval_date: Date
-  }]
+  status: { type: String, default: "Draft" },
+  systems_impacted: [
+    {
+      system_name: String,
+      environment: String,
+    },
+  ],
+  target_servers: [{ server_name: String, environment: String }],
+  pre_deployment_tasks: [
+    {
+      description: String,
+      owner: String,
+      staging_complete: Boolean,
+      prod_complete: Boolean,
+    },
+  ],
+  tasks: [
+    {
+      task_type: String, // e.g., Pre-requisite, Pre-Deployment, etc.
+      description: String,
+      owner: String,
+      status: String,
+    },
+  ],
+  issues: [
+    {
+      jira_item: String,
+      sf_solution: String,
+      comments: String,
+    },
+  ],
+  risks: [
+    {
+      risk: String,
+      remediation: String,
+    },
+  ],
+  approvals: [
+    {
+      team: String,
+      primary_approver: String,
+      status: String,
+      approval_date: Date,
+    },
+  ],
 });
 
-module.exports = mongoose.model('Release', ReleaseSchema);
+module.exports = mongoose.model("Release", ReleaseSchema);

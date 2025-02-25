@@ -31,6 +31,12 @@ const CreateRelease = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!formData.release_version) {
+      alert('Release Version is required');
+      return;
+    }
+    
     try {
       const res = await axiosInstance.post('/api/releases', formData);
       navigate(`/releases/${res.data._id}`);

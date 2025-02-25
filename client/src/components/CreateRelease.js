@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axiosInstance from '../axiosConfig';
 import { useNavigate } from 'react-router-dom';
-import { Button, TextField, Typography, Container, Box, Grid2 } from '@mui/material';
+import { Button, TextField, Typography, Container, Box, Grid2, Stack } from '@mui/material';
 
 const CreateRelease = () => {
   const [formData, setFormData] = useState({
@@ -36,7 +36,7 @@ const CreateRelease = () => {
       alert('Release Version is required');
       return;
     }
-    
+
     try {
       const res = await axiosInstance.post('/api/releases', formData);
       navigate(`/releases/${res.data._id}`);
@@ -139,10 +139,9 @@ const CreateRelease = () => {
               />
             </Grid2>
           </Grid2>
-          <Box mt={4}>
-           <Button
+          <Stack direction='row' spacing={2} justifyContent='flex-end'>
+            <Button
               type="submit"
-              fullWidth
               variant="contained"
               color="primary"
               sx={{ mt: 3, mb: 2 }}
@@ -150,7 +149,6 @@ const CreateRelease = () => {
               Create
             </Button>
             <Button
-              fullWidth
               variant="outlined"
               color="secondary"
               sx={{ mt: 1 }}
@@ -158,7 +156,7 @@ const CreateRelease = () => {
             >
               Back
             </Button>
-          </Box>
+            </Stack>
         </form>
       </Box>
     </Container>

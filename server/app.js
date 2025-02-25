@@ -27,6 +27,7 @@ app.use((req, res, next) => {
 });
 
 // Log all incoming requests and their headers
+// Uncomment when debugging
 app.use((req, res, next) => {
   console.log(`Incoming request: ${req.method} ${req.url}`);
   console.log('Headers:', req.headers);

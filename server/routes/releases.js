@@ -1,10 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const Release = require("../models/Release");
-const Docxtemplater = require("docxtemplater");
-const PizZip = require("pizzip");
-const fs = require("fs");
-const path = require("path");
 
 // Get all releases
 router.get("/", async (req, res) => {
@@ -30,7 +26,32 @@ router.get("/:id", async (req, res) => {
 // Create a new release
 router.post("/", async (req, res) => {
   try {
-    const release = new Release(req.body);
+    const release = new Release({
+      product_name: req.body.product_name,
+      release_version: req.body.release_version,
+      release_type: req.body.release_type,
+      status: req.body.status,
+      staging: {
+        deployment_date: req.body.staging.deployment_date,
+        deployment_time: req.body.staging.deployment_time,
+        deployment_duration: req.body.staging.deployment_duration,
+        downtime: req.body.staging.downtime,
+        informed_resources: req.body.staging.informed_resources,
+        systems_impacted: req.body.staging.systems_impacted,
+        target_servers: req.body.staging.target_servers,
+        resources_responsible: req.body.staging.resources_responsible,
+      },
+      production: {
+        deployment_date: req.body.production.deployment_date,
+        deployment_time: req.body.production.deployment_time,
+        deployment_duration: req.body.production.deployment_duration,
+        downtime: req.body.production.downtime,
+        informed_resources: req.body.production.informed_resources,
+        systems_impacted: req.body.production.systems_impacted,
+        target_servers: req.body.production.target_servers,
+        resources_responsible: req.body.production.resources_responsible,
+      },
+    });
     await release.save();
     res.status(201).json(release);
   } catch (err) {
@@ -43,7 +64,32 @@ router.put("/:id", async (req, res) => {
   try {
     const release = await Release.findById(req.params.id);
     if (!release) return res.status(404).json({ message: "Release not found" });
-    Object.assign(release, req.body);
+
+    release.product_name = req.body.product_name;
+    release.release_version = req.body.release_version;
+    release.release_type = req.body.release_type;
+    release.status = req.body.status;
+    release.staging = {
+      deployment_date: req.body.staging.deployment_date,
+      deployment_time: req.body.staging.deployment_time,
+      deployment_duration: req.body.staging.deployment_duration,
+      downtime: req.body.staging.downtime,
+      informed_resources: req.body.staging.informed_resources,
+      systems_impacted: req.body.staging.systems_impacted,
+      target_servers: req.body.staging.target_servers,
+      resources_responsible: req.body.staging.resources_responsible,
+    };
+    release.production = {
+      deployment_date: req.body.production.deployment_date,
+      deployment_time: req.body.production.deployment_time,
+      deployment_duration: req.body.production.deployment_duration,
+      downtime: req.body.production.downtime,
+      informed_resources: req.body.production.informed_resources,
+      systems_impacted: req.body.production.systems_impacted,
+      target_servers: req.body.production.target_servers,
+      resources_responsible: req.body.production.resources_responsible,
+    };
+
     await release.save();
     res.json(release);
   } catch (err) {
@@ -69,7 +115,12 @@ router.get("/:id/document", async (req, res) => {
     const release = await Release.findById(req.params.id);
     if (!release) return res.status(404).json({ message: "Release not found" });
 
+    // Load the template file
     const templatePath = path.join(__dirname, "../template.docx");
+    if (!fs.existsSync(templatePath)) {
+      return res.status(500).json({ message: "Template file not found" });
+    }
+
     const content = fs.readFileSync(templatePath, "binary");
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, {
@@ -77,79 +128,40 @@ router.get("/:id/document", async (req, res) => {
       linebreaks: true,
     });
 
+    // Set data for the template
     doc.setData({
       product_name: release.product_name,
       release_version: release.release_version,
       release_type: release.release_type,
-      deployment_date: release.deployment_date
-        ? release.deployment_date.toISOString().split("T")[0]
-        : "",
-      deployment_time: release.deployment_time || "",
-      deployment_duration: release.deployment_duration || "",
-      downtime: release.downtime || "",
-      resources_responsible: release.resources_responsible || "",
       status: release.status,
-      systems_impacted: release.systems_impacted.map((s) => ({
-        system_name: s.system_name,
-        environment: s.environment,
-      })),
-      target_servers: release.target_servers.map((s) => ({
-        server_name: s.server_name,
-        environment: s.environment,
-      })),
-      tasks: release.tasks.map((t) => ({
-        task_type: t.task_type,
-        description: t.description,
-        owner: t.owner,
-        status: t.status,
-      })),
-      issues: release.issues.map((i) => ({
-        jira_item: i.jira_item,
-        sf_solution: i.sf_solution,
-        comments: i.comments,
-      })),
-      pre_deployment_tasks: release.pre_deployment_tasks.map((t) => ({
-        description: t.description,
-        owner: t.owner,
-        staging_complete: t.staging_complete ? "Yes" : "No",
-        prod_complete: t.prod_complete ? "Yes" : "No",
-      })),
-      risks: release.risks.map((r) => ({
-        risk: r.risk,
-        remediation: r.remediation,
-      })),
-      approvals: release.approvals.map((a) => ({
-        team: a.team,
-        primary_approver: a.primary_approver,
-        status: a.status,
-        approval_date: a.approval_date
-          ? a.approval_date.toISOString().split("T")[0]
-          : "",
-      })),
+      staging_deployment_date: release.staging?.deployment_date || "N/A",
+      staging_resources_responsible: release.staging?.resources_responsible?.join(", ") || "N/A",
+      production_deployment_date: release.production?.deployment_date || "N/A",
+      production_resources_responsible: release.production?.resources_responsible?.join(", ") || "N/A",
     });
 
-    console.log('Data set');
-    doc.render();
-    console.log('Document rendered');
+    // Render the document
+    try {
+      doc.render();
+    } catch (error) {
+      console.error("Error rendering document:", error);
+      return res.status(500).json({ message: "Error rendering document" });
+    }
 
-    const buf = doc.getZip().generate({ type: "nodebuffer" });
+    const buffer = doc.getZip().generate({ type: "nodebuffer" });
 
-    res.set(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    );
-    res.set(
-      "Content-Disposition",
-      `attachment; filename=${release.product_name}_${release.release_version}.docx`
-    );
+    // Set headers and send the document
+    res.set({
+      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "Content-Disposition": `attachment; filename=${release.product_name}_${release.release_version}.docx`,
+    });
 
-    res.send(buf);
-
-    console.log('Document sent');
+    res.send(buffer);
   } catch (err) {
-    console.error('Error generating document:', err);
-    res.status(500).json({ message: err.message });
+    console.error("Error generating document:", err);
+    res.status(500).json({ message: "Error generating document" });
   }
 });
+
 
 module.exports = router;

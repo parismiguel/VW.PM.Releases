@@ -10,10 +10,7 @@ require('dotenv').config();
 
 // MongoDB Connection
 mongoose
-  .connect("mongodb://localhost:27017/uprise-releases", {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect("mongodb://localhost:27017/uprise-releases")
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error(err));
 

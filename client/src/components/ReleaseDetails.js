@@ -67,111 +67,71 @@ const ReleaseDetails = () => {
   if (!release) return <Typography>Loading...</Typography>;
 
   return (
-    <Container maxWidth='md'>
+    <Container maxWidth="md">
       <Box mt={4} mb={4}>
-        <Typography variant='h4' gutterBottom>
+        <Typography variant="h4" gutterBottom>
           {release.product_name} - {release.release_version}
         </Typography>
         <Paper elevation={1} sx={{ p: 2 }}>
-          <Typography variant='h6'>Release Information</Typography>
+          <Typography variant="h6">Common Information</Typography>
           <Typography>Type: {release.release_type}</Typography>
           <Typography>Status: {release.status}</Typography>
-          <Typography>
-            Deployment Date:{" "}
-            {release.deployment_date
-              ? new Date(release.deployment_date).toLocaleDateString()
-              : "N/A"}
-          </Typography>
-          <Typography>Time: {release.deployment_time || "N/A"}</Typography>
-          <Typography>
-            Duration: {release.deployment_duration || "N/A"}
-          </Typography>
-          <Typography>Downtime: {release.downtime || "N/A"}</Typography>
-          <Typography>
-            Resources: {release.resources_responsible || "N/A"}
-          </Typography>
         </Paper>
 
+        {/* Staging Environment */}
         <Box mt={2}>
           <Paper elevation={1} sx={{ p: 2 }}>
-            <Typography variant='h6'>Systems Impacted</Typography>
-            <List>
-              {release.systems_impacted.map((system, index) => (
-                <ListItem key={index}>
-                  <ListItemText
-                    primary={`${system.system_name} (${system.environment})`}
-                  />
-                </ListItem>
-              ))}
-            </List>
+            <Typography variant="h6">Staging</Typography>
+            <Typography>
+              Deployment Date:{" "}
+              {release.staging?.deployment_date
+                ? new Date(release.staging.deployment_date).toLocaleDateString()
+                : "N/A"}
+            </Typography>
+            <Typography>
+              Resources Responsible:{" "}
+              {release.staging?.resources_responsible?.join(", ") || "N/A"}
+            </Typography>
           </Paper>
         </Box>
 
+        {/* Production Environment */}
         <Box mt={2}>
           <Paper elevation={1} sx={{ p: 2 }}>
-            <Typography variant='h6'>Tasks</Typography>
-            <List>
-              {release.tasks.map((task, index) => (
-                <ListItem key={index}>
-                  <ListItemText
-                    primary={`${task.task_type}: ${task.description} - ${task.owner} (${task.status})`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Box>
-
-        <Box mt={2}>
-          <Paper elevation={1} sx={{ p: 2 }}>
-            <Typography variant='h6'>Risks</Typography>
-            <List>
-              {release.risks.map((risk, index) => (
-                <ListItem key={index}>
-                  <ListItemText
-                    primary={`Risk: ${risk.risk} - Remediation: ${risk.remediation}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        </Box>
-
-        <Box mt={2}>
-          <Paper elevation={1} sx={{ p: 2 }}>
-            <Typography variant='h6'>Approvals</Typography>
-            <List>
-              {release.approvals.map((approval, index) => (
-                <ListItem key={index}>
-                  <ListItemText
-                    primary={`${approval.team}: ${approval.primary_approver} (${approval.status})`}
-                  />
-                </ListItem>
-              ))}
-            </List>
+            <Typography variant="h6">Production</Typography>
+            <Typography>
+              Deployment Date:{" "}
+              {release.production?.deployment_date
+                ? new Date(release.production.deployment_date).toLocaleDateString()
+                : "N/A"}
+            </Typography>
+            <Typography>
+              Resources Responsible:{" "}
+              {release.production?.resources_responsible?.join(", ") || "N/A"}
+            </Typography>
           </Paper>
         </Box>
 
         <Box mt={4}>
           {success && (
-            <Alert severity='success' sx={{ mb: 2 }}>
+            <Alert severity="success" sx={{ mb: 2 }}>
               {success}
             </Alert>
           )}
-          <Stack direction='row' spacing={2} justifyContent='flex-end'>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
             <Button
               disabled={loading}
-              variant='contained'
-              color='primary'
+              variant="contained"
+              color="primary"
               onClick={handleGenerateDocument}
             >
               {loading ? "Generating..." : "Generate Document"}
             </Button>
-            <Button variant='contained' color='secondary' onClick={handleEdit}>
+            <Button variant="contained" color="secondary" onClick={handleEdit}>
               Edit
             </Button>
 
-            <Button variant='outlined' color='secondary' onClick={handleBack}>
+            <Button variant="outlined" color="secondary" onClick={handleBack}>
               Back
             </Button>
           </Stack>

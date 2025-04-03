@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axiosInstance from "../axiosConfig";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Button,
@@ -7,218 +6,286 @@ import {
   Typography,
   Container,
   Box,
-  List,
-  ListItem,
-  ListItemText,
-  Paper,
-  Grid2,
-  IconButton,
-  Checkbox,
   Tabs,
   Tab,
-  Stack
+  Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Alert,
+  Checkbox,
+  FormControlLabel,
+  FormGroup,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { getReleaseById, updateRelease } from "../services/releaseService";
+import {
+  productOptions,
+  releaseTypeOptions,
+  statusOptions,
+  systemsImpacted,
+  targetServers,
+  preRequisites
+} from "../constants/releaseConstants";
 
 const EditRelease = () => {
   const { id } = useParams();
-  const [release, setRelease] = useState(null);
-  const [newSystem, setNewSystem] = useState({
-    system_name: "",
-    environment: "",
-  });
-  const [newTask, setNewTask] = useState({
-    task_type: "",
-    description: "",
-    owner: "",
-    status: "",
-  });
-  const [newPreTask, setNewPreTask] = useState({
-    description: "",
-    owner: "",
-    staging_complete: false,
-    prod_complete: false,
-  });
-  const [newRisk, setNewRisk] = useState({ risk: "", remediation: "" });
-  const [newApproval, setNewApproval] = useState({
-    team: "",
-    primary_approver: "",
-    status: "",
-  });
-  const [newServer, setNewServer] = useState({
-    server_name: "",
-    environment: "",
-  });
-  const [newIssue, setNewIssue] = useState({
-    jira_item: "",
-    sf_solution: "",
-    comments: "",
-  });
-
-  const [tabValue, setTabValue] = useState(0); // State for active tab
-
   const navigate = useNavigate();
 
+  const [release, setRelease] = useState(null);
+  const [tabValue, setTabValue] = useState(0);
+  const [systemsTabValue, setSystemsTabValue] = useState(0);
+  const [semverError, setSemverError] = useState("");
+  const [alertMessage, setAlertMessage] = useState("");
+
+  const [prerequisiteData, setPrerequisiteData] = useState(preRequisites.data);
+
   useEffect(() => {
-    axiosInstance
-      .get(`/api/releases/${id}`)
-      .then((res) => setRelease(res.data))
-      .catch((err) => console.error(err));
-  }, [id]);
+    const fetchRelease = async () => {
+      try {
+        const data = await getReleaseById(id);
 
-  const handleBack = () => {
-    navigate('/'); // Navigate back to the previous page
-  };
+        // Ensure `systems_impacted` and `target_servers` are initialized
+        const initializedRelease = {
+          ...data,
+          staging: {
+            ...data.staging,
+            systems_impacted: data.staging?.systems_impacted || [],
+            target_servers: data.staging?.target_servers || [],
+          },
+          production: {
+            ...data.production,
+            systems_impacted: data.production?.systems_impacted || [],
+            target_servers: data.production?.target_servers || [],
+          },
+          prerequisiteData: data.prerequisiteData || prerequisiteData, // Initialize prerequisite data
+        };
 
-  const handleChange = (e) => {
-    setRelease({ ...release, [e.target.name]: e.target.value });
-  };
+        setRelease(initializedRelease);
+      } catch (error) {
+        console.error("Error fetching release:", error);
+      }
+    };
 
-  // Handle Systems Impacted
-  const handleSystemChange = (e) => {
-    setNewSystem({ ...newSystem, [e.target.name]: e.target.value });
-  };
-  const addSystem = () => {
-    setRelease({
-      ...release,
-      systems_impacted: [...release.systems_impacted, newSystem],
-    });
-    setNewSystem({ system_name: "", environment: "" });
-  };
-  const deleteSystem = (index) => {
-    setRelease({
-      ...release,
-      systems_impacted: release.systems_impacted.filter((_, i) => i !== index),
-    });
-  };
+    fetchRelease();
+  }, [id, prerequisiteData]);
 
-  // Handle Tasks
-  const handleTaskChange = (e) => {
-    setNewTask({ ...newTask, [e.target.name]: e.target.value });
-  };
-  const addTask = () => {
-    setRelease({ ...release, tasks: [...release.tasks, newTask] });
-    setNewTask({ task_type: "", description: "", owner: "", status: "" });
-  };
-  const deleteTask = (index) => {
-    setRelease({
-      ...release,
-      tasks: release.tasks.filter((_, i) => i !== index),
-    });
+  const handleBack = () => navigate(`/releases/${id}`);
+
+  const handleTabChange = (event, newValue) => setTabValue(newValue);
+
+  const handleSystemsTabChange = (event, newValue) =>
+    setSystemsTabValue(newValue);
+
+  const validateSemver = (value) => {
+    const semverRegex = /^\d+\.\d+\.\d+\.\d+$/;
+    if (!semverRegex.test(value)) {
+      return "Release version must follow the semver format (e.g., 3.1.186.0).";
+    }
+    return "";
   };
 
-  // Pre-Deployment Tasks
-  const handlePreTaskChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setNewPreTask({
-      ...newPreTask,
-      [name]: type === "checkbox" ? checked : value,
-    });
+  const handleReleaseChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "release_version") {
+      const error = validateSemver(value);
+      setSemverError(error);
+    }
+
+    setRelease({ ...release, [name]: value });
   };
-  const addPreTask = () => {
+
+  const handleEnvironmentChange = (e, environment) => {
+    const { name, value } = e.target;
     setRelease({
       ...release,
-      pre_deployment_tasks: [...release.pre_deployment_tasks, newPreTask],
-    });
-    setNewPreTask({
-      description: "",
-      owner: "",
-      staging_complete: false,
-      prod_complete: false,
-    });
-  };
-  const deletePreTask = (index) => {
-    setRelease({
-      ...release,
-      pre_deployment_tasks: release.pre_deployment_tasks.filter(
-        (_, i) => i !== index
-      ),
+      [environment]: {
+        ...release[environment],
+        [name]: value,
+      },
     });
   };
 
-  // Handle Risks
-  const handleRiskChange = (e) => {
-    setNewRisk({ ...newRisk, [e.target.name]: e.target.value });
-  };
-  const addRisk = () => {
-    setRelease({ ...release, risks: [...release.risks, newRisk] });
-    setNewRisk({ risk: "", remediation: "" });
-  };
-  const deleteRisk = (index) => {
+  const handleCheckboxChange = (e, environment) => {
+    const { name, checked } = e.target;
+    const updatedSystems = checked
+      ? [...(release[environment]?.systems_impacted || []), name]
+      : release[environment]?.systems_impacted.filter(
+          (system) => system !== name
+        );
+
     setRelease({
       ...release,
-      risks: release.risks.filter((_, i) => i !== index),
+      [environment]: {
+        ...release[environment],
+        systems_impacted: updatedSystems,
+      },
     });
   };
 
-  // Handle Approvals
-  const handleApprovalChange = (e) => {
-    setNewApproval({ ...newApproval, [e.target.name]: e.target.value });
-  };
-  const addApproval = () => {
-    setRelease({
-      ...release,
-      approvals: [
-        ...release.approvals,
-        { ...newApproval, approval_date: new Date() },
-      ],
-    });
-    setNewApproval({ team: "", primary_approver: "", status: "" });
-  };
-  const deleteApproval = (index) => {
-    setRelease({
-      ...release,
-      approvals: release.approvals.filter((_, i) => i !== index),
-    });
+  const handleTargetServersChange = (e, environment) => {
+    const normalizedEnvironment = environment.toLowerCase(); // Normalize casing
+
+    if (!release || !release[normalizedEnvironment]) return;
+
+    const { name, checked } = e.target;
+    const updatedServers = checked
+      ? [...(release[normalizedEnvironment]?.target_servers || []), name]
+      : release[normalizedEnvironment]?.target_servers.filter(
+          (server) => server !== name
+        );
+
+    console.log("Environment:", normalizedEnvironment);
+    console.log("Updated Servers:", updatedServers);
+
+    setRelease((prevRelease) => ({
+      ...prevRelease,
+      [normalizedEnvironment]: {
+        ...prevRelease[normalizedEnvironment],
+        target_servers: updatedServers,
+      },
+    }));
   };
 
-  // Target Servers
-  const handleServerChange = (e) =>
-    setNewServer({ ...newServer, [e.target.name]: e.target.value });
-  const addServer = () => {
-    setRelease({
-      ...release,
-      target_servers: [...release.target_servers, newServer],
-    });
-    setNewServer({ server_name: "", environment: "" });
-  };
-  const deleteServer = (index) => {
-    setRelease({
-      ...release,
-      target_servers: release.target_servers.filter((_, i) => i !== index),
-    });
-  };
-
-  // Issues
-  const handleIssueChange = (e) =>
-    setNewIssue({ ...newIssue, [e.target.name]: e.target.value });
-  const addIssue = () => {
-    setRelease({ ...release, issues: [...release.issues, newIssue] });
-    setNewIssue({ jira_item: "", sf_solution: "", comments: "" });
-  };
-  const deleteIssue = (index) => {
-    setRelease({
-      ...release,
-      issues: release.issues.filter((_, i) => i !== index),
-    });
+  const handlePrerequisiteChange = (index, field, value) => {
+    const updatedData = [...prerequisiteData];
+    updatedData[index][field] = value;
+    setPrerequisiteData(updatedData);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const error = validateSemver(release.release_version);
+    if (error) {
+      setSemverError(error);
+      setAlertMessage(error);
+      return;
+    }
+
     try {
-      await axiosInstance.put(`/api/releases/${id}`, release);
-      navigate(`/releases/${id}`);
-    } catch (err) {
-      console.error("Error updating release:", err);
+      const updatedRelease = {
+        ...release,
+        prerequisiteData, // Include prerequisite data in the release object
+      };
+      await updateRelease(id, updatedRelease);
+      toast.success("Release updated successfully!");
+    } catch (error) {
+      console.error("Error updating release:", error);
+      setAlertMessage("An error occurred while updating the release.");
     }
   };
 
-  const handleTabChange = (event, newValue) => {
-    setTabValue(newValue);
+  if (!release) return <Typography>Loading...</Typography>;
+
+  const renderSystemsCheckboxes = (environment) => {
+    return (
+      <>
+        <Tabs
+          value={systemsTabValue}
+          onChange={handleSystemsTabChange}
+          aria-label='systems tabs'
+          sx={{ mt: 2 }}
+        >
+          {Object.keys(systemsImpacted).map((category, index) => (
+            <Tab key={category} label={category} />
+          ))}
+        </Tabs>
+        {Object.entries(systemsImpacted).map(
+          ([category, systems], index) =>
+            systemsTabValue === index && (
+              <Box key={category} mt={2}>
+                <Typography variant='subtitle1'>{category}</Typography>
+                <FormGroup>
+                  {systems.map((system) => (
+                    <FormControlLabel
+                      key={system}
+                      control={
+                        <Checkbox
+                          name={system}
+                          checked={
+                            release[environment]?.systems_impacted?.includes(
+                              system
+                            ) || false
+                          }
+                          onChange={(e) => handleCheckboxChange(e, environment)}
+                        />
+                      }
+                      label={system}
+                    />
+                  ))}
+                </FormGroup>
+              </Box>
+            )
+        )}
+      </>
+    );
   };
 
-  if (!release) return <Typography>Loading...</Typography>;
+  const renderTargetServersCheckboxes = (environment) => {
+    const normalizedEnvironment = environment.toLowerCase(); // Normalize casing
+
+    // Safeguard: Ensure targetServers[normalizedEnvironment] exists
+    if (!targetServers[normalizedEnvironment]) {
+      console.error(
+        `Target servers not found for environment: ${normalizedEnvironment}`
+      );
+      return (
+        <Typography>
+          No target servers available for this environment.
+        </Typography>
+      );
+    }
+
+    return (
+      <>
+        <Tabs
+          value={systemsTabValue}
+          onChange={handleSystemsTabChange}
+          aria-label='target servers tabs'
+          sx={{ mt: 2 }}
+        >
+          {Object.keys(targetServers[normalizedEnvironment]).map(
+            (category, index) => (
+              <Tab key={category} label={category} />
+            )
+          )}
+        </Tabs>
+        {Object.entries(targetServers[normalizedEnvironment]).map(
+          ([category, servers], index) =>
+            systemsTabValue === index && (
+              <Box key={category} mt={2}>
+                <Typography variant='subtitle1'>{category}</Typography>
+                <FormGroup>
+                  {servers.map((server) => (
+                    <FormControlLabel
+                      key={server}
+                      control={
+                        <Checkbox
+                          name={server}
+                          checked={
+                            release[
+                              normalizedEnvironment
+                            ]?.target_servers?.includes(server) || false
+                          }
+                          onChange={(e) =>
+                            handleTargetServersChange(e, normalizedEnvironment)
+                          }
+                        />
+                      }
+                      label={server}
+                    />
+                  ))}
+                </FormGroup>
+              </Box>
+            )
+        )}
+      </>
+    );
+  };
 
   return (
     <Container maxWidth='md'>
@@ -226,562 +293,328 @@ const EditRelease = () => {
         <Typography variant='h4' gutterBottom>
           Edit Release: {release.release_version}
         </Typography>
+
+        {alertMessage && (
+          <Alert
+            severity='error'
+            onClose={() => setAlertMessage("")}
+            sx={{ mb: 2 }}
+          >
+            {alertMessage}
+          </Alert>
+        )}
+
         <form onSubmit={handleSubmit}>
           <Tabs
             value={tabValue}
             onChange={handleTabChange}
             aria-label='edit release tabs'
           >
-            <Tab label='Release Info' />
-            <Tab label='Systems & Servers' />
-            <Tab label='Tasks' />
-            <Tab label='Issues & Risks' />
-            <Tab label='Approvals' />
+            <Tab label='Common Info' />
+            <Tab label='Staging' />
+            <Tab label='Production' />
+            <Tab label='Pre-requisite' /> {/* New tab */}
           </Tabs>
 
-          {/* Tab 0: Release Info */}
           {tabValue === 0 && (
             <Box mt={2}>
-              <Grid2 container spacing={2}>
-                <Grid2 item xs={12}>
-                  <TextField
-                    fullWidth
-                    label='Product Name'
-                    name='product_name'
-                    value={release.product_name}
-                    onChange={handleChange}
-                  />
-                </Grid2>
-                <Grid2 item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='Release Version'
-                    name='release_version'
-                    value={release.release_version}
-                    onChange={handleChange}
-                  />
-                </Grid2>
-                <Grid2 item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='Release Type'
-                    name='release_type'
-                    value={release.release_type}
-                    onChange={handleChange}
-                  />
-                </Grid2>
-                <Grid2 item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='Deployment Date'
-                    type='date'
-                    name='deployment_date'
-                    value={
-                      release.deployment_date
-                        ? release.deployment_date.split("T")[0]
-                        : ""
-                    }
-                    onChange={handleChange}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid2>
-                <Grid2 item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='Deployment Time'
-                    name='deployment_time'
-                    value={release.deployment_time}
-                    onChange={handleChange}
-                  />
-                </Grid2>
-                <Grid2 item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='Deployment Duration'
-                    name='deployment_duration'
-                    value={release.deployment_duration}
-                    onChange={handleChange}
-                  />
-                </Grid2>
-                <Grid2 item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='Downtime'
-                    name='downtime'
-                    value={release.downtime}
-                    onChange={handleChange}
-                  />
-                </Grid2>
-                <Grid2 item xs={12}>
-                  <TextField
-                    fullWidth
-                    label='Resources Responsible'
-                    name='resources_responsible'
-                    value={release.resources_responsible}
-                    onChange={handleChange}
-                  />
-                </Grid2>
-                <Grid2 item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label='Status'
-                    name='status'
-                    value={release.status}
-                    onChange={handleChange}
-                  />
-                </Grid2>
-              </Grid2>
+              <FormControl fullWidth variant='outlined' sx={{ mb: 2 }}>
+                <InputLabel id='product-name-label'>Product Name</InputLabel>
+                <Select
+                  labelId='product-name-label'
+                  name='product_name'
+                  value={release.product_name || ""}
+                  onChange={handleReleaseChange}
+                  label='Product Name'
+                  required
+                >
+                  {productOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                fullWidth
+                label='Release Version'
+                name='release_version'
+                value={release.release_version}
+                onChange={handleReleaseChange}
+                error={!!semverError}
+                helperText={semverError}
+                sx={{ mb: 2 }}
+              />
+              <FormControl fullWidth variant='outlined' sx={{ mb: 2 }}>
+                <InputLabel id='release-type-label'>Release Type</InputLabel>
+                <Select
+                  labelId='release-type-label'
+                  name='release_type'
+                  value={release.release_type || ""}
+                  onChange={handleReleaseChange}
+                  label='Release Type'
+                  required
+                >
+                  {releaseTypeOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth variant='outlined' sx={{ mb: 2 }}>
+                <InputLabel id='status-label'>Status</InputLabel>
+                <Select
+                  labelId='status-label'
+                  name='status'
+                  value={release.status || ""}
+                  onChange={handleReleaseChange}
+                  label='Status'
+                  required
+                >
+                  {statusOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
           )}
 
-          {/* Tab 1: Systems & Servers */}
           {tabValue === 1 && (
             <Box mt={2}>
-              <Typography variant='h6'>Systems Impacted</Typography>
-              <Paper elevation={1} sx={{ p: 2 }}>
-                <List>
-                  {release.systems_impacted.map((system, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton
-                          edge='end'
-                          onClick={() => deleteSystem(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={`${system.system_name} (${system.environment})`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                <Grid2 container spacing={2}>
-                  <Grid2 item xs={5}>
-                    <TextField
-                      fullWidth
-                      label='System Name'
-                      name='system_name'
-                      value={newSystem.system_name}
-                      onChange={handleSystemChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={5}>
-                    <TextField
-                      fullWidth
-                      label='Environment'
-                      name='environment'
-                      value={newSystem.environment}
-                      onChange={handleSystemChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={2}>
-                    <Button
-                      variant='contained'
-                      startIcon={<AddIcon />}
-                      onClick={addSystem}
-                    >
-                      Add
-                    </Button>
-                  </Grid2>
-                </Grid2>
-              </Paper>
+              <Typography variant='h6' gutterBottom>
+                Staging
+              </Typography>
+              <TextField
+                fullWidth
+                label='Deployment Date'
+                type='date'
+                name='deployment_date'
+                value={release.staging?.deployment_date || ""}
+                onChange={(e) => handleEnvironmentChange(e, "staging")}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label='Deployment Time'
+                type='time'
+                name='deployment_time'
+                value={release.staging?.deployment_time || ""}
+                onChange={(e) => handleEnvironmentChange(e, "staging")}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label='Deployment Duration (hours)'
+                type='number'
+                name='deployment_duration'
+                value={release.staging?.deployment_duration || ""}
+                onChange={(e) => handleEnvironmentChange(e, "staging")}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label='Downtime (hours)'
+                type='number'
+                name='downtime'
+                value={release.staging?.downtime || ""}
+                onChange={(e) => handleEnvironmentChange(e, "staging")}
+                sx={{ mb: 2 }}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    name='informed_resources'
+                    checked={release.staging?.informed_resources || false}
+                    onChange={(e) =>
+                      handleEnvironmentChange(
+                        {
+                          target: {
+                            name: "informed_resources",
+                            value: e.target.checked,
+                          },
+                        },
+                        "staging"
+                      )
+                    }
+                  />
+                }
+                label='Informed all resources of the push activities?'
+              />
+              <Typography variant='h6' gutterBottom sx={{ mt: 2 }}>
+                Systems/Applications Impacted
+              </Typography>
+              {renderSystemsCheckboxes("staging")}
 
-              <Typography variant='h6' sx={{ mt: 2 }}>
+              <Typography variant='h6' gutterBottom sx={{ mt: 4 }}>
                 Target Servers
               </Typography>
-              <Paper elevation={1} sx={{ p: 2 }}>
-                <List>
-                  {release.target_servers.map((server, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton
-                          edge='end'
-                          onClick={() => deleteServer(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={`${server.server_name} (${server.environment})`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                <Grid2 container spacing={2}>
-                  <Grid2 item xs={5}>
-                    <TextField
-                      fullWidth
-                      label='Server Name'
-                      name='server_name'
-                      value={newServer.server_name}
-                      onChange={handleServerChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={5}>
-                    <TextField
-                      fullWidth
-                      label='Environment'
-                      name='environment'
-                      value={newServer.environment}
-                      onChange={handleServerChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={2}>
-                    <Button
-                      variant='contained'
-                      startIcon={<AddIcon />}
-                      onClick={addServer}
-                    >
-                      Add
-                    </Button>
-                  </Grid2>
-                </Grid2>
-              </Paper>
+              {renderTargetServersCheckboxes("Staging")}
             </Box>
           )}
 
-          {/* Tab 2: Tasks */}
           {tabValue === 2 && (
             <Box mt={2}>
-              <Typography variant='h6'>Tasks</Typography>
-              <Paper elevation={1} sx={{ p: 2 }}>
-                <List>
-                  {release.tasks.map((task, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton
-                          edge='end'
-                          onClick={() => deleteTask(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={`${task.task_type}: ${task.description} - ${task.owner} (${task.status})`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                <Grid2 container spacing={2}>
-                  <Grid2 item xs={3}>
-                    <TextField
-                      fullWidth
-                      label='Task Type'
-                      name='task_type'
-                      value={newTask.task_type}
-                      onChange={handleTaskChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={3}>
-                    <TextField
-                      fullWidth
-                      label='Description'
-                      name='description'
-                      value={newTask.description}
-                      onChange={handleTaskChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={3}>
-                    <TextField
-                      fullWidth
-                      label='Owner'
-                      name='owner'
-                      value={newTask.owner}
-                      onChange={handleTaskChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={2}>
-                    <TextField
-                      fullWidth
-                      label='Status'
-                      name='status'
-                      value={newTask.status}
-                      onChange={handleTaskChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={1}>
-                    <Button
-                      variant='contained'
-                      startIcon={<AddIcon />}
-                      onClick={addTask}
-                    >
-                      Add
-                    </Button>
-                  </Grid2>
-                </Grid2>
-              </Paper>
-
-              <Typography variant='h6' sx={{ mt: 2 }}>
-                Pre-Deployment Tasks
+              <Typography variant='h6' gutterBottom>
+                Production
               </Typography>
-              <Paper elevation={1} sx={{ p: 2 }}>
-                <List>
-                  {release.pre_deployment_tasks.map((task, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton
-                          edge='end'
-                          onClick={() => deletePreTask(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={`${task.description} - ${
-                          task.owner
-                        } (Staging: ${
-                          task.staging_complete ? "Yes" : "No"
-                        }, Prod: ${task.prod_complete ? "Yes" : "No"})`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                <Grid2 container spacing={2}>
-                  <Grid2 item xs={4}>
-                    <TextField
-                      fullWidth
-                      label='Description'
-                      name='description'
-                      value={newPreTask.description}
-                      onChange={handlePreTaskChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={4}>
-                    <TextField
-                      fullWidth
-                      label='Owner'
-                      name='owner'
-                      value={newPreTask.owner}
-                      onChange={handlePreTaskChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={1}>
-                    <Checkbox
-                      name='staging_complete'
-                      checked={newPreTask.staging_complete}
-                      onChange={handlePreTaskChange}
-                    />{" "}
-                    Staging
-                  </Grid2>
-                  <Grid2 item xs={1}>
-                    <Checkbox
-                      name='prod_complete'
-                      checked={newPreTask.prod_complete}
-                      onChange={handlePreTaskChange}
-                    />{" "}
-                    Prod
-                  </Grid2>
-                  <Grid2 item xs={2}>
-                    <Button
-                      variant='contained'
-                      startIcon={<AddIcon />}
-                      onClick={addPreTask}
-                    >
-                      Add
-                    </Button>
-                  </Grid2>
-                </Grid2>
-              </Paper>
-            </Box>
-          )}
-
-          {/* Tab 3: Issues & Risks */}
-          {tabValue === 3 && (
-            <Box mt={2}>
-              <Typography variant='h6'>Known Issues</Typography>
-              <Paper elevation={1} sx={{ p: 2 }}>
-                <List>
-                  {release.issues.map((issue, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton
-                          edge='end'
-                          onClick={() => deleteIssue(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={`JIRA: ${issue.jira_item}, SF: ${issue.sf_solution}, Comments: ${issue.comments}`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                <Grid2 container spacing={2}>
-                  <Grid2 item xs={3}>
-                    <TextField
-                      fullWidth
-                      label='JIRA Item'
-                      name='jira_item'
-                      value={newIssue.jira_item}
-                      onChange={handleIssueChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={3}>
-                    <TextField
-                      fullWidth
-                      label='SF Solution'
-                      name='sf_solution'
-                      value={newIssue.sf_solution}
-                      onChange={handleIssueChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={4}>
-                    <TextField
-                      fullWidth
-                      label='Comments'
-                      name='comments'
-                      value={newIssue.comments}
-                      onChange={handleIssueChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={2}>
-                    <Button
-                      variant='contained'
-                      startIcon={<AddIcon />}
-                      onClick={addIssue}
-                    >
-                      Add
-                    </Button>
-                  </Grid2>
-                </Grid2>
-              </Paper>
-
-              <Typography variant='h6' sx={{ mt: 2 }}>
-                Risks
+              <TextField
+                fullWidth
+                label='Deployment Date'
+                type='date'
+                name='deployment_date'
+                value={release.production?.deployment_date || ""}
+                onChange={(e) => handleEnvironmentChange(e, "production")}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label='Deployment Time'
+                type='time'
+                name='deployment_time'
+                value={release.production?.deployment_time || ""}
+                onChange={(e) => handleEnvironmentChange(e, "production")}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label='Deployment Duration (hours)'
+                type='number'
+                name='deployment_duration'
+                value={release.production?.deployment_duration || ""}
+                onChange={(e) => handleEnvironmentChange(e, "production")}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                label='Downtime (hours)'
+                type='number'
+                name='downtime'
+                value={release.production?.downtime || ""}
+                onChange={(e) => handleEnvironmentChange(e, "production")}
+                sx={{ mb: 2 }}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    name='informed_resources'
+                    checked={release.production?.informed_resources || false}
+                    onChange={(e) =>
+                      handleEnvironmentChange(
+                        {
+                          target: {
+                            name: "informed_resources",
+                            value: e.target.checked,
+                          },
+                        },
+                        "production"
+                      )
+                    }
+                  />
+                }
+                label='Informed all resources of the push activities?'
+              />
+              <Typography variant='h6' gutterBottom sx={{ mt: 2 }}>
+                Systems/Applications Impacted
               </Typography>
-              <Paper elevation={1} sx={{ p: 2 }}>
-                <List>
-                  {release.risks.map((risk, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton
-                          edge='end'
-                          onClick={() => deleteRisk(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      }
-                    >
-                      <ListItemText
-                        primary={`Risk: ${risk.risk} - Remediation: ${risk.remediation}`}
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                <Grid2 container spacing={2}>
-                  <Grid2 item xs={5}>
-                    <TextField
-                      fullWidth
-                      label='Risk'
-                      name='risk'
-                      value={newRisk.risk}
-                      onChange={handleRiskChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={5}>
-                    <TextField
-                      fullWidth
-                      label='Remediation'
-                      name='remediation'
-                      value={newRisk.remediation}
-                      onChange={handleRiskChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={2}>
-                    <Button
-                      variant='contained'
-                      startIcon={<AddIcon />}
-                      onClick={addRisk}
-                    >
-                      Add
-                    </Button>
-                  </Grid2>
-                </Grid2>
-              </Paper>
+              {renderSystemsCheckboxes("production")}
+
+              <Typography variant='h6' gutterBottom sx={{ mt: 4 }}>
+                Target Servers
+              </Typography>
+              {renderTargetServersCheckboxes("Production")}
             </Box>
           )}
 
-          {/* Tab 4: Approvals */}
-          {tabValue === 4 && (
+          {tabValue === 3 && ( // Pre-requisite tab
             <Box mt={2}>
-              <Typography variant='h6'>Approvals</Typography>
-              <Paper elevation={1} sx={{ p: 2 }}>
-                <List>
-                  {release.approvals.map((approval, index) => (
-                    <ListItem
-                      key={index}
-                      secondaryAction={
-                        <IconButton
-                          edge='end'
-                          onClick={() => deleteApproval(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      }
+              <Typography variant='h6' gutterBottom>
+                Pre-requisite Checklist
+              </Typography>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th
+                      style={{
+                        border: "1px solid #ccc",
+                        padding: "8px",
+                        width: "20%", // Stretch this column
+                        wordWrap: "break-word", // Enable word wrapping
+                        textAlign: "left", // Align text to the left
+                      }}
                     >
-                      <ListItemText
-                        primary={`${approval.team}: ${approval.primary_approver} (${approval.status})`}
-                      />
-                    </ListItem>
+                      Regression Enter Criteria
+                    </th>
+                    <th style={{ border: "1px solid #ccc", padding: "8px" }}>
+                      Status 100% Complete
+                    </th>
+                    <th
+                      style={{
+                        border: "1px solid #ccc",
+                        padding: "8px",
+                        width: "50%", // Stretch this column
+                        wordWrap: "break-word", // Enable word wrapping
+                        textAlign: "left", // Align text to the left
+                      }}
+                    >
+                      Exceptions. Provide comments if any item is not complete
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {prerequisiteData.map((row, index) => (
+                    <tr key={index}>
+                      <td style={{ border: "1px solid #ccc", padding: "8px" }}>
+                        {row.criteria}
+                      </td>
+                      <td
+                        style={{
+                          border: "1px solid #ccc",
+                          padding: "8px",
+                          textAlign: "center",
+                        }}
+                      >
+                        <Checkbox
+                          checked={row.status}
+                          onChange={(e) =>
+                            handlePrerequisiteChange(
+                              index,
+                              "status",
+                              e.target.checked
+                            )
+                          }
+                        />
+                      </td>
+                      <td style={{ border: "1px solid #ccc", padding: "8px" }}>
+                        <TextField
+                          fullWidth
+                          value={row.exceptions}
+                          onChange={(e) =>
+                            handlePrerequisiteChange(
+                              index,
+                              "exceptions",
+                              e.target.value
+                            )
+                          }
+                          placeholder='Enter comments'
+                        />
+                      </td>
+                    </tr>
                   ))}
-                </List>
-                <Grid2 container spacing={2}>
-                  <Grid2 item xs={4}>
-                    <TextField
-                      fullWidth
-                      label='Team'
-                      name='team'
-                      value={newApproval.team}
-                      onChange={handleApprovalChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={4}>
-                    <TextField
-                      fullWidth
-                      label='Primary Approver'
-                      name='primary_approver'
-                      value={newApproval.primary_approver}
-                      onChange={handleApprovalChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={2}>
-                    <TextField
-                      fullWidth
-                      label='Status'
-                      name='status'
-                      value={newApproval.status}
-                      onChange={handleApprovalChange}
-                    />
-                  </Grid2>
-                  <Grid2 item xs={2}>
-                    <Button
-                      variant='contained'
-                      startIcon={<AddIcon />}
-                      onClick={addApproval}
-                    >
-                      Add
-                    </Button>
-                  </Grid2>
-                </Grid2>
-              </Paper>
+                </tbody>
+              </table>
             </Box>
           )}
 
-          <Stack direction='row' spacing={2} justifyContent='flex-end'>
-            <Button variant='contained' color='primary' type='submit'>
+          <Stack direction='row' spacing={2} justifyContent='flex-end' mt={4}>
+            <Button
+              variant='contained'
+              color='primary'
+              type='submit'
+              disabled={!!semverError}
+            >
               Update Release
             </Button>
             <Button variant='outlined' color='secondary' onClick={handleBack}>
@@ -790,6 +623,7 @@ const EditRelease = () => {
           </Stack>
         </form>
       </Box>
+      <ToastContainer />
     </Container>
   );
 };

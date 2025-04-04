@@ -16,8 +16,18 @@ const ReleaseSchema = new mongoose.Schema({
   release_version: { type: String, required: true },
   release_type: { type: String, required: true },
   status: { type: String, required: true },
-  staging: { type: EnvironmentSchema, required: true }, // Staging environment
-  production: { type: EnvironmentSchema, required: true }, // Production environment
+  staging: { type: EnvironmentSchema, required: true },
+  production: { type: EnvironmentSchema, required: true },
+  prerequisiteData: [
+    {
+      criteria: { type: String, required: true },
+      status: { type: Boolean, required: true },
+      exceptions: { type: String },
+    },
+  ],
+  jira_release_filter: { type: String },
 });
+
+module.exports = mongoose.model("Release", ReleaseSchema);
 
 module.exports = mongoose.model("Release", ReleaseSchema);

@@ -169,3 +169,18 @@ export const preRequisites = {
       exceptions: "",
     },
   ]};
+
+  export const readiness = {
+    data: [
+        { criteria: "Regression Test Completed & Passed", status: false, exceptions: "" },
+        { criteria: "Staging Test Completed & Passed", status: false, exceptions: "" },
+        { criteria: "Performance Test Completed", status: false, exceptions: "" },
+        { criteria: "Defects Closed", status: false, exceptions: "" },
+        { criteria: "Documentation [Help] Completed", status: false, exceptions: "" },
+        { criteria: "Release Notes Completed & Approved", status: false, exceptions: "" },
+        { criteria: "Release Communication Ready & Approved", status: false, exceptions: "" },
+        { criteria: "Db. Scripts to run Listed", status: false, exceptions: "" },
+        { criteria: "Configuration Changes Updated", status: false, exceptions: "" },
+        { criteria: "Secrets updated", status: false, exceptions: "" },
+      ]
+  }

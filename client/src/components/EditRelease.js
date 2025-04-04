@@ -1,18 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
-  Button,
-  TextField,
   Typography,
   Container,
   Box,
   Tabs,
   Tab,
-  Stack,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Alert,
   Checkbox,
   FormControlLabel,
@@ -27,8 +20,14 @@ import {
   statusOptions,
   systemsImpacted,
   targetServers,
-  preRequisites
+  preRequisites,
+  readiness
 } from "../constants/releaseConstants";
+import CommonInfo from "./CommonInfo";
+import EnvironmentDetails from "./EnvironmentDetails";
+import PreRequisiteChecklist from "./PreRequisiteChecklist";
+import ReleaseReadinessChecklist from "./ReleaseReadinessChecklist";
+import ReleaseActions from "./ReleaseActions"; // Import the new component
 
 const EditRelease = () => {
   const { id } = useParams();
@@ -41,13 +40,14 @@ const EditRelease = () => {
   const [alertMessage, setAlertMessage] = useState("");
 
   const [prerequisiteData, setPrerequisiteData] = useState(preRequisites.data);
+  const [readinessData, setReadinessData] = useState(readiness.data);
 
   useEffect(() => {
     const fetchRelease = async () => {
       try {
         const data = await getReleaseById(id);
 
-        // Ensure `systems_impacted` and `target_servers` are initialized
+        // Ensure `systems_impacted`, `target_servers`, and `prerequisiteData` are initialized
         const initializedRelease = {
           ...data,
           staging: {
@@ -60,17 +60,18 @@ const EditRelease = () => {
             systems_impacted: data.production?.systems_impacted || [],
             target_servers: data.production?.target_servers || [],
           },
-          prerequisiteData: data.prerequisiteData || prerequisiteData, // Initialize prerequisite data
         };
 
         setRelease(initializedRelease);
+        setPrerequisiteData(data.prerequisiteData || preRequisites.data);
+        setReadinessData(data.readinessData || readiness.data);
       } catch (error) {
         console.error("Error fetching release:", error);
       }
     };
 
     fetchRelease();
-  }, [id, prerequisiteData]);
+  }, [id]);
 
   const handleBack = () => navigate(`/releases/${id}`);
 
@@ -156,6 +157,12 @@ const EditRelease = () => {
     setPrerequisiteData(updatedData);
   };
 
+  const handleReadinessChange = (index, field, value) => {
+    const updatedData = [...readinessData];
+    updatedData[index][field] = value;
+    setReadinessData(updatedData);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -169,7 +176,8 @@ const EditRelease = () => {
     try {
       const updatedRelease = {
         ...release,
-        prerequisiteData, // Include prerequisite data in the release object
+        prerequisiteData,
+        readinessData
       };
       await updateRelease(id, updatedRelease);
       toast.success("Release updated successfully!");
@@ -313,314 +321,60 @@ const EditRelease = () => {
             <Tab label='Common Info' />
             <Tab label='Staging' />
             <Tab label='Production' />
-            <Tab label='Pre-requisite' /> {/* New tab */}
+            <Tab label='Pre-requisite' /> 
+            <Tab label="Release Readiness" />
           </Tabs>
 
           {tabValue === 0 && (
-            <Box mt={2}>
-              <FormControl fullWidth variant='outlined' sx={{ mb: 2 }}>
-                <InputLabel id='product-name-label'>Product Name</InputLabel>
-                <Select
-                  labelId='product-name-label'
-                  name='product_name'
-                  value={release.product_name || ""}
-                  onChange={handleReleaseChange}
-                  label='Product Name'
-                  required
-                >
-                  {productOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <TextField
-                fullWidth
-                label='Release Version'
-                name='release_version'
-                value={release.release_version}
-                onChange={handleReleaseChange}
-                error={!!semverError}
-                helperText={semverError}
-                sx={{ mb: 2 }}
-              />
-              <FormControl fullWidth variant='outlined' sx={{ mb: 2 }}>
-                <InputLabel id='release-type-label'>Release Type</InputLabel>
-                <Select
-                  labelId='release-type-label'
-                  name='release_type'
-                  value={release.release_type || ""}
-                  onChange={handleReleaseChange}
-                  label='Release Type'
-                  required
-                >
-                  {releaseTypeOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl fullWidth variant='outlined' sx={{ mb: 2 }}>
-                <InputLabel id='status-label'>Status</InputLabel>
-                <Select
-                  labelId='status-label'
-                  name='status'
-                  value={release.status || ""}
-                  onChange={handleReleaseChange}
-                  label='Status'
-                  required
-                >
-                  {statusOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
+            <CommonInfo
+              release={release}
+              handleReleaseChange={handleReleaseChange}
+              semverError={semverError}
+              productOptions={productOptions}
+              releaseTypeOptions={releaseTypeOptions}
+              statusOptions={statusOptions}
+            />
           )}
 
           {tabValue === 1 && (
-            <Box mt={2}>
-              <Typography variant='h6' gutterBottom>
-                Staging
-              </Typography>
-              <TextField
-                fullWidth
-                label='Deployment Date'
-                type='date'
-                name='deployment_date'
-                value={release.staging?.deployment_date || ""}
-                onChange={(e) => handleEnvironmentChange(e, "staging")}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label='Deployment Time'
-                type='time'
-                name='deployment_time'
-                value={release.staging?.deployment_time || ""}
-                onChange={(e) => handleEnvironmentChange(e, "staging")}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label='Deployment Duration (hours)'
-                type='number'
-                name='deployment_duration'
-                value={release.staging?.deployment_duration || ""}
-                onChange={(e) => handleEnvironmentChange(e, "staging")}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label='Downtime (hours)'
-                type='number'
-                name='downtime'
-                value={release.staging?.downtime || ""}
-                onChange={(e) => handleEnvironmentChange(e, "staging")}
-                sx={{ mb: 2 }}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name='informed_resources'
-                    checked={release.staging?.informed_resources || false}
-                    onChange={(e) =>
-                      handleEnvironmentChange(
-                        {
-                          target: {
-                            name: "informed_resources",
-                            value: e.target.checked,
-                          },
-                        },
-                        "staging"
-                      )
-                    }
-                  />
-                }
-                label='Informed all resources of the push activities?'
-              />
-              <Typography variant='h6' gutterBottom sx={{ mt: 2 }}>
-                Systems/Applications Impacted
-              </Typography>
-              {renderSystemsCheckboxes("staging")}
-
-              <Typography variant='h6' gutterBottom sx={{ mt: 4 }}>
-                Target Servers
-              </Typography>
-              {renderTargetServersCheckboxes("Staging")}
-            </Box>
+            <EnvironmentDetails
+              environment="staging"
+              release={release}
+              handleEnvironmentChange={handleEnvironmentChange}
+              renderSystemsCheckboxes={renderSystemsCheckboxes}
+              renderTargetServersCheckboxes={renderTargetServersCheckboxes}
+            />
           )}
 
           {tabValue === 2 && (
-            <Box mt={2}>
-              <Typography variant='h6' gutterBottom>
-                Production
-              </Typography>
-              <TextField
-                fullWidth
-                label='Deployment Date'
-                type='date'
-                name='deployment_date'
-                value={release.production?.deployment_date || ""}
-                onChange={(e) => handleEnvironmentChange(e, "production")}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label='Deployment Time'
-                type='time'
-                name='deployment_time'
-                value={release.production?.deployment_time || ""}
-                onChange={(e) => handleEnvironmentChange(e, "production")}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label='Deployment Duration (hours)'
-                type='number'
-                name='deployment_duration'
-                value={release.production?.deployment_duration || ""}
-                onChange={(e) => handleEnvironmentChange(e, "production")}
-                sx={{ mb: 2 }}
-              />
-              <TextField
-                fullWidth
-                label='Downtime (hours)'
-                type='number'
-                name='downtime'
-                value={release.production?.downtime || ""}
-                onChange={(e) => handleEnvironmentChange(e, "production")}
-                sx={{ mb: 2 }}
-              />
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    name='informed_resources'
-                    checked={release.production?.informed_resources || false}
-                    onChange={(e) =>
-                      handleEnvironmentChange(
-                        {
-                          target: {
-                            name: "informed_resources",
-                            value: e.target.checked,
-                          },
-                        },
-                        "production"
-                      )
-                    }
-                  />
-                }
-                label='Informed all resources of the push activities?'
-              />
-              <Typography variant='h6' gutterBottom sx={{ mt: 2 }}>
-                Systems/Applications Impacted
-              </Typography>
-              {renderSystemsCheckboxes("production")}
-
-              <Typography variant='h6' gutterBottom sx={{ mt: 4 }}>
-                Target Servers
-              </Typography>
-              {renderTargetServersCheckboxes("Production")}
-            </Box>
+            <EnvironmentDetails
+              environment="production"
+              release={release}
+              handleEnvironmentChange={handleEnvironmentChange}
+              renderSystemsCheckboxes={renderSystemsCheckboxes}
+              renderTargetServersCheckboxes={renderTargetServersCheckboxes}
+            />
           )}
 
-          {tabValue === 3 && ( // Pre-requisite tab
-            <Box mt={2}>
-              <Typography variant='h6' gutterBottom>
-                Pre-requisite Checklist
-              </Typography>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <th
-                      style={{
-                        border: "1px solid #ccc",
-                        padding: "8px",
-                        width: "20%", // Stretch this column
-                        wordWrap: "break-word", // Enable word wrapping
-                        textAlign: "left", // Align text to the left
-                      }}
-                    >
-                      Regression Enter Criteria
-                    </th>
-                    <th style={{ border: "1px solid #ccc", padding: "8px" }}>
-                      Status 100% Complete
-                    </th>
-                    <th
-                      style={{
-                        border: "1px solid #ccc",
-                        padding: "8px",
-                        width: "50%", // Stretch this column
-                        wordWrap: "break-word", // Enable word wrapping
-                        textAlign: "left", // Align text to the left
-                      }}
-                    >
-                      Exceptions. Provide comments if any item is not complete
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {prerequisiteData.map((row, index) => (
-                    <tr key={index}>
-                      <td style={{ border: "1px solid #ccc", padding: "8px" }}>
-                        {row.criteria}
-                      </td>
-                      <td
-                        style={{
-                          border: "1px solid #ccc",
-                          padding: "8px",
-                          textAlign: "center",
-                        }}
-                      >
-                        <Checkbox
-                          checked={row.status}
-                          onChange={(e) =>
-                            handlePrerequisiteChange(
-                              index,
-                              "status",
-                              e.target.checked
-                            )
-                          }
-                        />
-                      </td>
-                      <td style={{ border: "1px solid #ccc", padding: "8px" }}>
-                        <TextField
-                          fullWidth
-                          value={row.exceptions}
-                          onChange={(e) =>
-                            handlePrerequisiteChange(
-                              index,
-                              "exceptions",
-                              e.target.value
-                            )
-                          }
-                          placeholder='Enter comments'
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </Box>
+          {tabValue === 3 && (
+            <PreRequisiteChecklist
+              prerequisiteData={prerequisiteData}
+              handlePrerequisiteChange={handlePrerequisiteChange}
+            />
           )}
 
-          <Stack direction='row' spacing={2} justifyContent='flex-end' mt={4}>
-            <Button
-              variant='contained'
-              color='primary'
-              type='submit'
-              disabled={!!semverError}
-            >
-              Update Release
-            </Button>
-            <Button variant='outlined' color='secondary' onClick={handleBack}>
-              Back
-            </Button>
-          </Stack>
+          {tabValue === 4 && (
+            <ReleaseReadinessChecklist
+              readinessData={readinessData}
+              handleReadinessChange={handleReadinessChange}
+            />
+          )}
+
+          <ReleaseActions
+            handleSubmit={handleSubmit}
+            handleBack={handleBack}
+            semverError={semverError}
+          />
         </form>
       </Box>
       <ToastContainer />

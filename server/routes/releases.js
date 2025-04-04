@@ -31,26 +31,9 @@ router.post("/", async (req, res) => {
       release_version: req.body.release_version,
       release_type: req.body.release_type,
       status: req.body.status,
-      staging: {
-        deployment_date: req.body.staging.deployment_date,
-        deployment_time: req.body.staging.deployment_time,
-        deployment_duration: req.body.staging.deployment_duration,
-        downtime: req.body.staging.downtime,
-        informed_resources: req.body.staging.informed_resources,
-        systems_impacted: req.body.staging.systems_impacted,
-        target_servers: req.body.staging.target_servers,
-        resources_responsible: req.body.staging.resources_responsible,
-      },
-      production: {
-        deployment_date: req.body.production.deployment_date,
-        deployment_time: req.body.production.deployment_time,
-        deployment_duration: req.body.production.deployment_duration,
-        downtime: req.body.production.downtime,
-        informed_resources: req.body.production.informed_resources,
-        systems_impacted: req.body.production.systems_impacted,
-        target_servers: req.body.production.target_servers,
-        resources_responsible: req.body.production.resources_responsible,
-      },
+      jira_release_filter: req.body.jira_release_filter, // Add this field
+      staging: req.body.staging,
+      production: req.body.production,
     });
     await release.save();
     res.status(201).json(release);
@@ -69,26 +52,10 @@ router.put("/:id", async (req, res) => {
     release.release_version = req.body.release_version;
     release.release_type = req.body.release_type;
     release.status = req.body.status;
-    release.staging = {
-      deployment_date: req.body.staging.deployment_date,
-      deployment_time: req.body.staging.deployment_time,
-      deployment_duration: req.body.staging.deployment_duration,
-      downtime: req.body.staging.downtime,
-      informed_resources: req.body.staging.informed_resources,
-      systems_impacted: req.body.staging.systems_impacted,
-      target_servers: req.body.staging.target_servers,
-      resources_responsible: req.body.staging.resources_responsible,
-    };
-    release.production = {
-      deployment_date: req.body.production.deployment_date,
-      deployment_time: req.body.production.deployment_time,
-      deployment_duration: req.body.production.deployment_duration,
-      downtime: req.body.production.downtime,
-      informed_resources: req.body.production.informed_resources,
-      systems_impacted: req.body.production.systems_impacted,
-      target_servers: req.body.production.target_servers,
-      resources_responsible: req.body.production.resources_responsible,
-    };
+    release.jira_release_filter = req.body.jira_release_filter; // Add this field
+    release.staging = req.body.staging;
+    release.production = req.body.production;
+    release.prerequisiteData = req.body.prerequisiteData;
 
     await release.save();
     res.json(release);

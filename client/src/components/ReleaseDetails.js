@@ -7,9 +7,6 @@ import {
   Box,
   Button,
   Paper,
-  List,
-  ListItem,
-  ListItemText,
   Stack,
   Alert,
 } from "@mui/material";
@@ -76,6 +73,16 @@ const ReleaseDetails = () => {
           <Typography variant="h6">Common Information</Typography>
           <Typography>Type: {release.release_type}</Typography>
           <Typography>Status: {release.status}</Typography>
+          <Typography>
+            JIRA Release Filter:{" "}
+            {release.jira_release_filter ? (
+              <a href={release.jira_release_filter} target="_blank" rel="noopener noreferrer">
+                {release.jira_release_filter}
+              </a>
+            ) : (
+              "N/A"
+            )}
+          </Typography>
         </Paper>
 
         {/* Staging Environment */}

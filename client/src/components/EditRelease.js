@@ -28,9 +28,15 @@ import CommonInfo from "./CommonInfo";
 import EnvironmentDetails from "./EnvironmentDetails";
 import PreRequisiteChecklist from "./PreRequisiteChecklist";
 import ReleaseReadinessChecklist from "./ReleaseReadinessChecklist";
-import PreDeploymentTasks from "./PreDeploymentTasks"; // Import the new component
-import Screenshots from "./Screenshots";
+import PreDeploymentTasks from "./PreDeploymentTasks";
+import DeploymentRisks from "./DeploymentRisks";
 import ReleaseActions from "./ReleaseActions";
+import DeploymentValidationTasks from "./DeploymentValidationTasks";
+import PostDeploymentTasks from "./PostDeploymentTasks";
+import PostDeploymentIssues from "./PostDeploymentIssues";
+import KnownIssues from "./KnownIssues";
+import GoNoGo from "./GoNoGo";
+import Screenshots from "./Screenshots";
 
 const EditRelease = () => {
   const { id } = useParams();
@@ -46,18 +52,66 @@ const EditRelease = () => {
   const [prerequisiteData, setPrerequisiteData] = useState(preRequisites.data);
   const [readinessData, setReadinessData] = useState(readiness.data);
   const [preDeploymentTasks, setPreDeploymentTasks] = useState([
-    { description: "Verify database backups", completed: false, notes: "" },
+    { description: "", completed: false, notes: "" },
+  ]);
+
+  const [risks, setRisks] = useState([{ risk: "", remediation: "" }]);
+
+  const [validationTasks, setValidationTasks] = useState([
     {
-      description: "Ensure staging environment is ready",
-      completed: false,
-      notes: "",
-    },
-    {
-      description: "Notify stakeholders of deployment schedule",
-      completed: false,
-      notes: "",
+      repositoryName: "",
+      releaseLink: "",
+      resource: "",
+      beginEndTime: "",
+      stagingComments: "",
+      prodComments: "",
     },
   ]);
+
+  const [postDeploymentTasks, setPostDeploymentTasks] = useState([
+    {
+      task: "",
+      resource: "",
+      beginEndTime: "",
+      stagingComments: "",
+      prodComments: "",
+    },
+  ]);
+
+  const [postDeploymentIssues, setPostDeploymentIssues] = useState([
+    {
+      id: "",
+      title: "",
+      sfSolution: "",
+      workItemType: "",
+      tfsRelease: "",
+      comments: "",
+    },
+  ]);
+
+  const [knownIssues, setKnownIssues] = useState([
+    {
+      jiraItem: "",
+      sfSolution: "",
+      proposedRelease: "",
+      comments: "",
+    },
+  ]);
+
+  const [goNoGo, setGoNoGo] = useState({
+    Development: {
+      Primary: { responsible: "", go: false },
+      Backup: { responsible: "", go: false },
+    },
+    QA: {
+      Primary: { responsible: "", go: false },
+      Backup: { responsible: "", go: false },
+    },
+    "Product Management": {
+      Primary: { responsible: "", go: false },
+      Backup: { responsible: "", go: false },
+    },
+  });
 
   useEffect(() => {
     const fetchRelease = async () => {
@@ -206,6 +260,130 @@ const EditRelease = () => {
     );
   };
 
+  const handleRiskChange = (index, field, value) => {
+    const updatedRisks = [...risks];
+    updatedRisks[index][field] = value;
+    setRisks(updatedRisks);
+  };
+
+  const handleAddRisk = () => {
+    setRisks((prevRisks) => [...prevRisks, { risk: "", remediation: "" }]);
+  };
+
+  const handleDeleteRisk = (index) => {
+    setRisks((prevRisks) => prevRisks.filter((_, i) => i !== index));
+  };
+
+  const handleValidationTaskChange = (index, field, value) => {
+    const updatedTasks = [...validationTasks];
+    updatedTasks[index][field] = value;
+    setValidationTasks(updatedTasks);
+  };
+
+  const handleAddValidationTask = () => {
+    setValidationTasks((prevTasks) => [
+      ...prevTasks,
+      {
+        repositoryName: "",
+        releaseLink: "",
+        resource: "",
+        beginEndTime: "",
+        stagingComments: "",
+        prodComments: "",
+      },
+    ]);
+  };
+
+  const handleDeleteValidationTask = (index) => {
+    setValidationTasks((prevTasks) => prevTasks.filter((_, i) => i !== index));
+  };
+
+  const handlePostDeploymentTaskChange = (index, field, value) => {
+    const updatedTasks = [...postDeploymentTasks];
+    updatedTasks[index][field] = value;
+    setPostDeploymentTasks(updatedTasks);
+  };
+
+  const handleAddPostDeploymentTask = () => {
+    setPostDeploymentTasks((prevTasks) => [
+      ...prevTasks,
+      {
+        task: "",
+        resource: "",
+        beginEndTime: "",
+        stagingComments: "",
+        prodComments: "",
+      },
+    ]);
+  };
+
+  const handleDeletePostDeploymentTask = (index) => {
+    setPostDeploymentTasks((prevTasks) =>
+      prevTasks.filter((_, i) => i !== index)
+    );
+  };
+
+  const handleIssueChange = (index, field, value) => {
+    const updatedIssues = [...postDeploymentIssues];
+    updatedIssues[index][field] = value;
+    setPostDeploymentIssues(updatedIssues);
+  };
+
+  const handleAddIssue = () => {
+    setPostDeploymentIssues((prevIssues) => [
+      ...prevIssues,
+      {
+        id: "",
+        title: "",
+        sfSolution: "",
+        workItemType: "",
+        tfsRelease: "",
+        comments: "",
+      },
+    ]);
+  };
+
+  const handleDeleteIssue = (index) => {
+    setPostDeploymentIssues((prevIssues) =>
+      prevIssues.filter((_, i) => i !== index)
+    );
+  };
+
+  const handleKnownIssueChange = (index, field, value) => {
+    const updatedIssues = [...knownIssues];
+    updatedIssues[index][field] = value;
+    setKnownIssues(updatedIssues);
+  };
+
+  const handleAddKnownIssue = () => {
+    setKnownIssues((prevIssues) => [
+      ...prevIssues,
+      {
+        jiraItem: "",
+        sfSolution: "",
+        proposedRelease: "",
+        comments: "",
+      },
+    ]);
+  };
+
+  const handleDeleteKnownIssue = (index) => {
+    setKnownIssues((prevIssues) => prevIssues.filter((_, i) => i !== index));
+  };
+
+  const handleGoNoGoChange = (group, role, field, value) => {
+    setGoNoGo((prev) => ({
+      ...prev,
+      [group]: {
+        ...prev[group],
+        [role]: {
+          ...prev[group][role],
+          [field]: value,
+        },
+      },
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -222,6 +400,12 @@ const EditRelease = () => {
         prerequisiteData,
         readinessData,
         preDeploymentTasks,
+        risks,
+        validationTasks,
+        postDeploymentTasks,
+        postDeploymentIssues,
+        knownIssues,
+        goNoGo,
         modifiedBy: "currentUserId", // Replace with the actual user ID or name
       };
 
@@ -376,6 +560,12 @@ const EditRelease = () => {
             <Tab label='Pre-requisite' />
             <Tab label='Release Readiness' />
             <Tab label='Pre-Deployment Tasks' />
+            <Tab label='Deployment Risks' />
+            <Tab label='Deployment / Validation Tasks' />
+            <Tab label='Post Deployment Tasks' />
+            <Tab label='Post Deployment Issues' />
+            <Tab label='Known Issues' />
+            <Tab label='Go / No Go' />
             <Tab label='Screenshots' />
           </Tabs>
 
@@ -434,6 +624,55 @@ const EditRelease = () => {
           )}
 
           {tabValue === 6 && (
+            <DeploymentRisks
+              risks={risks}
+              handleRiskChange={handleRiskChange}
+              handleAddRisk={handleAddRisk}
+              handleDeleteRisk={handleDeleteRisk}
+            />
+          )}
+
+          {tabValue === 7 && (
+            <DeploymentValidationTasks
+              tasks={validationTasks}
+              handleTaskChange={handleValidationTaskChange}
+              handleAddTask={handleAddValidationTask}
+              handleDeleteTask={handleDeleteValidationTask}
+            />
+          )}
+
+          {tabValue === 8 && (
+            <PostDeploymentTasks
+              tasks={postDeploymentTasks}
+              handleTaskChange={handlePostDeploymentTaskChange}
+              handleAddTask={handleAddPostDeploymentTask}
+              handleDeleteTask={handleDeletePostDeploymentTask}
+            />
+          )}
+
+          {tabValue === 9 && (
+            <PostDeploymentIssues
+              issues={postDeploymentIssues}
+              handleIssueChange={handleIssueChange}
+              handleAddIssue={handleAddIssue}
+              handleDeleteIssue={handleDeleteIssue}
+            />
+          )}
+
+          {tabValue === 10 && (
+            <KnownIssues
+              issues={knownIssues}
+              handleIssueChange={handleKnownIssueChange}
+              handleAddIssue={handleAddKnownIssue}
+              handleDeleteIssue={handleDeleteKnownIssue}
+            />
+          )}
+
+          {tabValue === 11 && (
+            <GoNoGo goNoGo={goNoGo} handleGoNoGoChange={handleGoNoGoChange} />
+          )}
+
+          {tabValue === 12 && (
             <Screenshots
               screenshots={screenshots}
               setScreenshots={setScreenshots}

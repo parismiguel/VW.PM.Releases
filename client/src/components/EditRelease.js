@@ -28,8 +28,9 @@ import CommonInfo from "./CommonInfo";
 import EnvironmentDetails from "./EnvironmentDetails";
 import PreRequisiteChecklist from "./PreRequisiteChecklist";
 import ReleaseReadinessChecklist from "./ReleaseReadinessChecklist";
-import ReleaseActions from "./ReleaseActions";
+import PreDeploymentTasks from "./PreDeploymentTasks"; // Import the new component
 import Screenshots from "./Screenshots";
+import ReleaseActions from "./ReleaseActions";
 
 const EditRelease = () => {
   const { id } = useParams();
@@ -44,6 +45,19 @@ const EditRelease = () => {
 
   const [prerequisiteData, setPrerequisiteData] = useState(preRequisites.data);
   const [readinessData, setReadinessData] = useState(readiness.data);
+  const [preDeploymentTasks, setPreDeploymentTasks] = useState([
+    { description: "Verify database backups", completed: false, notes: "" },
+    {
+      description: "Ensure staging environment is ready",
+      completed: false,
+      notes: "",
+    },
+    {
+      description: "Notify stakeholders of deployment schedule",
+      completed: false,
+      notes: "",
+    },
+  ]);
 
   useEffect(() => {
     const fetchRelease = async () => {
@@ -168,6 +182,30 @@ const EditRelease = () => {
     setReadinessData(updatedData);
   };
 
+  const handleTaskChange = (index, field, value) => {
+    const updatedTasks = [...preDeploymentTasks];
+    updatedTasks[index][field] = value;
+    setPreDeploymentTasks(updatedTasks);
+  };
+
+  const handleAddTask = () => {
+    setPreDeploymentTasks((prevTasks) => [
+      ...prevTasks,
+      {
+        description: "",
+        owner: "",
+        stagingComplete: false,
+        prodComplete: false,
+      },
+    ]);
+  };
+
+  const handleDeleteTask = (index) => {
+    setPreDeploymentTasks((prevTasks) =>
+      prevTasks.filter((_, i) => i !== index)
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -183,6 +221,7 @@ const EditRelease = () => {
         ...release,
         prerequisiteData,
         readinessData,
+        preDeploymentTasks,
         modifiedBy: "currentUserId", // Replace with the actual user ID or name
       };
 
@@ -324,12 +363,19 @@ const EditRelease = () => {
             value={tabValue}
             onChange={handleTabChange}
             aria-label='edit release tabs'
+            variant='scrollable' // Make tabs scrollable
+            scrollButtons='auto' // Show scroll buttons automatically when needed
+            sx={{
+              mt: 2,
+              borderBottom: "1px solid #ccc",
+            }}
           >
             <Tab label='Common Info' />
             <Tab label='Staging' />
             <Tab label='Production' />
             <Tab label='Pre-requisite' />
             <Tab label='Release Readiness' />
+            <Tab label='Pre-Deployment Tasks' />
             <Tab label='Screenshots' />
           </Tabs>
 
@@ -379,6 +425,15 @@ const EditRelease = () => {
           )}
 
           {tabValue === 5 && (
+            <PreDeploymentTasks
+              tasks={preDeploymentTasks}
+              handleTaskChange={handleTaskChange}
+              handleAddTask={handleAddTask}
+              handleDeleteTask={handleDeleteTask}
+            />
+          )}
+
+          {tabValue === 6 && (
             <Screenshots
               screenshots={screenshots}
               setScreenshots={setScreenshots}

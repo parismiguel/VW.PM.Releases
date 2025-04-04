@@ -29,6 +29,8 @@ const CreateRelease = () => {
       deployment_date: "",
       resources_responsible: [],
     },
+    createdBy: "currentUserId", // Replace with the actual user ID or name
+    modifiedBy: "currentUserId", // Set the same value as createdBy during creation
   });
 
   const navigate = useNavigate();

@@ -1,6 +1,10 @@
 export const productOptions = ["Uprise", "Ordering Platform", "Support Tools"];
 
-export const releaseTypeOptions = ["Scheduled Release", "Hotfix", "Beta Release"];
+export const releaseTypeOptions = [
+  "Scheduled Release",
+  "Hotfix",
+  "Beta Release",
+];
 
 export const statusOptions = ["Planned", "In Progress", "Completed"];
 
@@ -108,8 +112,8 @@ export const targetServers = {
   },
 };
 
-export const preRequisites = { 
-    data: [
+export const preRequisites = {
+  data: [
     {
       criteria: "Code Complete",
       status: false,
@@ -122,13 +126,7 @@ export const preRequisites = {
     },
     {
       criteria:
-        "Uprise version updated in TFS release (version number within the Uprise “About” UI)",
-      status: false,
-      exceptions: "",
-    },
-    {
-      criteria:
-        "[Link to Release Definition](https://tickets.visionweb.com/tfs/VisionWeb/Infrastructure/_apps/hub/ms.vss-releaseManagement-web.cd-workflow-hub?definitionId=20&_a=definition-variables)",
+        "Uprise version updated in TFS release (version number within the Uprise “About” UI) <a href='https://tickets.visionweb.com/tfs/VisionWeb/Infrastructure/_apps/hub/ms.vss-releaseManagement-web.cd-workflow-hub?definitionId=20&_a=definition-variables'>Link to Release Definition</a>",
       status: false,
       exceptions: "",
     },
@@ -168,19 +166,44 @@ export const preRequisites = {
       status: false,
       exceptions: "",
     },
-  ]};
+  ],
+};
 
-  export const readiness = {
-    data: [
-        { criteria: "Regression Test Completed & Passed", status: false, exceptions: "" },
-        { criteria: "Staging Test Completed & Passed", status: false, exceptions: "" },
-        { criteria: "Performance Test Completed", status: false, exceptions: "" },
-        { criteria: "Defects Closed", status: false, exceptions: "" },
-        { criteria: "Documentation [Help] Completed", status: false, exceptions: "" },
-        { criteria: "Release Notes Completed & Approved", status: false, exceptions: "" },
-        { criteria: "Release Communication Ready & Approved", status: false, exceptions: "" },
-        { criteria: "Db. Scripts to run Listed", status: false, exceptions: "" },
-        { criteria: "Configuration Changes Updated", status: false, exceptions: "" },
-        { criteria: "Secrets updated", status: false, exceptions: "" },
-      ]
-  }
+export const readiness = {
+  data: [
+    {
+      criteria: "Regression Test Completed & Passed",
+      status: false,
+      exceptions: "",
+    },
+    {
+      criteria: "Staging Test Completed & Passed",
+      status: false,
+      exceptions: "",
+    },
+    { criteria: "Performance Test Completed", status: false, exceptions: "" },
+    { criteria: "Defects Closed", status: false, exceptions: "" },
+    {
+      criteria: "Documentation [Help] Completed",
+      status: false,
+      exceptions: "",
+    },
+    {
+      criteria: "Release Notes Completed & Approved",
+      status: false,
+      exceptions: "",
+    },
+    {
+      criteria: "Release Communication Ready & Approved",
+      status: false,
+      exceptions: "",
+    },
+    { criteria: "Db. Scripts to run Listed", status: false, exceptions: "" },
+    {
+      criteria: "Configuration Changes Updated",
+      status: false,
+      exceptions: "",
+    },
+    { criteria: "Secrets updated", status: false, exceptions: "" },
+  ],
+};

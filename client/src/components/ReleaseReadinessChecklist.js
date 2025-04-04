@@ -2,31 +2,25 @@ import React from "react";
 import { Box, Typography, Checkbox, TextField } from "@mui/material";
 import styles from "./EditRelease.module.css";
 
-const ReleaseReadinessChecklist = ({ readinessData, handleReadinessChange }) => {
+const ReleaseReadinessChecklist = ({
+  readinessData,
+  handleReadinessChange,
+}) => {
   return (
     <Box mt={2}>
-      <Typography variant="h6" gutterBottom>
+      <Typography variant='h6' gutterBottom>
         Release Readiness: Go/No Go Meeting Approval
       </Typography>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr>
-            <th
-              className={styles.tableHeader}
-              style={{ width: "40%" }} // Set width to 40%
-            >
+            <th className={styles.tableHeader} style={{ width: "50%" }}>
               Regression & Staging Exit Criteria
             </th>
-            <th
-              className={styles.tableHeader}
-              style={{ width: "20%" }} // Set width to 20%
-            >
+            <th className={styles.tableHeader} style={{ width: "10%" }}>
               Status 100% Complete
             </th>
-            <th
-              className={styles.tableHeader}
-              style={{ width: "40%" }} // Set width to 40%
-            >
+            <th className={styles.tableHeader} style={{ width: "40%" }}>
               Exceptions
             </th>
           </tr>
@@ -35,10 +29,7 @@ const ReleaseReadinessChecklist = ({ readinessData, handleReadinessChange }) => 
           {readinessData.map((row, index) => (
             <tr key={index} className={styles.tableRow}>
               <td className={styles.tableCell}>{row.criteria}</td>
-              <td
-                className={styles.tableCell}
-                style={{ textAlign: "center" }}
-              >
+              <td className={styles.tableCell} style={{ textAlign: "center" }}>
                 <Checkbox
                   checked={row.status}
                   onChange={(e) =>
@@ -53,7 +44,8 @@ const ReleaseReadinessChecklist = ({ readinessData, handleReadinessChange }) => 
                   onChange={(e) =>
                     handleReadinessChange(index, "exceptions", e.target.value)
                   }
-                  placeholder="Enter comments"
+                  placeholder='Enter comments'
+                  className={styles.inputWithPadding}
                 />
               </td>
             </tr>

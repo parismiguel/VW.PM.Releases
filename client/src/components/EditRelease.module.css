@@ -16,3 +16,7 @@
     padding: 4px;
     border: 1px solid #ccc;
   }
+
+  .inputWithPadding {
+    padding: 5px;
+  }

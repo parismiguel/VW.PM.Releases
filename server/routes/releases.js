@@ -35,7 +35,8 @@ router.post("/", async (req, res) => {
       staging: req.body.staging,
       production: req.body.production,
       prerequisiteData: req.body.prerequisiteData,
-      createdBy: req.body.createdBy, // Set createdBy from the request
+      readinessData: req.body.readinessData,
+      createdBy: req.body.createdBy,
     });
     await release.save();
     res.status(201).json(release);
@@ -58,7 +59,8 @@ router.put("/:id", async (req, res) => {
     release.staging = req.body.staging;
     release.production = req.body.production;
     release.prerequisiteData = req.body.prerequisiteData;
-    release.modifiedBy = req.body.modifiedBy; // Set modifiedBy from the request
+    release.readinessData = req.body.readinessData;
+    release.modifiedBy = req.body.modifiedBy;
 
     await release.save();
     res.json(release);

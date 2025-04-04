@@ -85,9 +85,15 @@ const EnvironmentDetails = ({
                 environment
               )
             }
+            sx={{
+              p: 0, // Remove all padding
+            }}
           />
         }
         label='Informed all resources of the push activities?'
+        sx={{
+          alignItems: "center", // Align the checkbox and label vertically
+        }}
       />
 
       <Typography variant='h6' gutterBottom sx={{ mt: 2 }}>

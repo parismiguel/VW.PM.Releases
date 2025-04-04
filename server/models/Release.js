@@ -11,6 +11,18 @@ const EnvironmentSchema = new mongoose.Schema({
   resources_responsible: { type: [String] }, // Array of tags
 });
 
+const PrerequisiteSchema = new mongoose.Schema({
+  criteria: { type: String, required: true }, // Prerequisite criteria description
+  status: { type: Boolean, required: true }, // Status (true/false)
+  exceptions: { type: String }, // Comments or exceptions
+});
+
+const ReadinessSchema = new mongoose.Schema({
+  criteria: { type: String, required: true }, // Readiness criteria description
+  status: { type: Boolean, required: true }, // Status (true/false)
+  exceptions: { type: String }, // Comments or exceptions
+});
+
 const ReleaseSchema = new mongoose.Schema(
   {
     product_name: { type: String, required: true },
@@ -19,13 +31,8 @@ const ReleaseSchema = new mongoose.Schema(
     status: { type: String, required: true },
     staging: { type: EnvironmentSchema, required: true },
     production: { type: EnvironmentSchema, required: true },
-    prerequisiteData: [
-      {
-        criteria: { type: String, required: true },
-        status: { type: Boolean, required: true },
-        exceptions: { type: String },
-      },
-    ],
+    prerequisiteData: [PrerequisiteSchema],
+    readinessData: [ReadinessSchema],
     jira_release_filter: { type: String },
     createdBy: { type: String, required: true },
     modifiedBy: { type: String },

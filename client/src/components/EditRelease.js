@@ -23,11 +23,13 @@ import {
   preRequisites,
   readiness,
 } from "../constants/releaseConstants";
+import { validateSemver } from "../utils/validationHelpers";
 import CommonInfo from "./CommonInfo";
 import EnvironmentDetails from "./EnvironmentDetails";
 import PreRequisiteChecklist from "./PreRequisiteChecklist";
 import ReleaseReadinessChecklist from "./ReleaseReadinessChecklist";
-import ReleaseActions from "./ReleaseActions"; // Import the new component
+import ReleaseActions from "./ReleaseActions";
+import Screenshots from "./Screenshots";
 
 const EditRelease = () => {
   const { id } = useParams();
@@ -37,6 +39,7 @@ const EditRelease = () => {
   const [tabValue, setTabValue] = useState(0);
   const [systemsTabValue, setSystemsTabValue] = useState(0);
   const [semverError, setSemverError] = useState("");
+  const [screenshots, setScreenshots] = useState([]);
   const [alertMessage, setAlertMessage] = useState("");
 
   const [prerequisiteData, setPrerequisiteData] = useState(preRequisites.data);
@@ -63,8 +66,18 @@ const EditRelease = () => {
         };
 
         setRelease(initializedRelease);
-        setPrerequisiteData(data.prerequisiteData || preRequisites.data);
-        setReadinessData(data.readinessData || readiness.data);
+        setPrerequisiteData(
+          Array.isArray(data.prerequisiteData) &&
+            data.prerequisiteData.length > 0
+            ? data.prerequisiteData
+            : preRequisites.data
+        );
+
+        setReadinessData(
+          Array.isArray(data.readinessData) && data.readinessData.length > 0
+            ? data.readinessData
+            : readiness.data
+        );
       } catch (error) {
         console.error("Error fetching release:", error);
       }
@@ -79,14 +92,6 @@ const EditRelease = () => {
 
   const handleSystemsTabChange = (event, newValue) =>
     setSystemsTabValue(newValue);
-
-  const validateSemver = (value) => {
-    const semverRegex = /^\d+\.\d+\.\d+\.\d+$/;
-    if (!semverRegex.test(value)) {
-      return "Release version must follow the semver format (e.g., 3.1.186.0).";
-    }
-    return "";
-  };
 
   const handleReleaseChange = (e) => {
     const { name, value } = e.target;
@@ -325,6 +330,7 @@ const EditRelease = () => {
             <Tab label='Production' />
             <Tab label='Pre-requisite' />
             <Tab label='Release Readiness' />
+            <Tab label='Screenshots' />
           </Tabs>
 
           {tabValue === 0 && (
@@ -369,6 +375,13 @@ const EditRelease = () => {
             <ReleaseReadinessChecklist
               readinessData={readinessData}
               handleReadinessChange={handleReadinessChange}
+            />
+          )}
+
+          {tabValue === 5 && (
+            <Screenshots
+              screenshots={screenshots}
+              setScreenshots={setScreenshots}
             />
           )}
 

@@ -21,7 +21,7 @@ import {
   systemsImpacted,
   targetServers,
   preRequisites,
-  readiness
+  readiness,
 } from "../constants/releaseConstants";
 import CommonInfo from "./CommonInfo";
 import EnvironmentDetails from "./EnvironmentDetails";
@@ -177,8 +177,10 @@ const EditRelease = () => {
       const updatedRelease = {
         ...release,
         prerequisiteData,
-        readinessData
+        readinessData,
+        modifiedBy: "currentUserId", // Replace with the actual user ID or name
       };
+
       await updateRelease(id, updatedRelease);
       toast.success("Release updated successfully!");
     } catch (error) {
@@ -321,8 +323,8 @@ const EditRelease = () => {
             <Tab label='Common Info' />
             <Tab label='Staging' />
             <Tab label='Production' />
-            <Tab label='Pre-requisite' /> 
-            <Tab label="Release Readiness" />
+            <Tab label='Pre-requisite' />
+            <Tab label='Release Readiness' />
           </Tabs>
 
           {tabValue === 0 && (
@@ -338,7 +340,7 @@ const EditRelease = () => {
 
           {tabValue === 1 && (
             <EnvironmentDetails
-              environment="staging"
+              environment='staging'
               release={release}
               handleEnvironmentChange={handleEnvironmentChange}
               renderSystemsCheckboxes={renderSystemsCheckboxes}
@@ -348,7 +350,7 @@ const EditRelease = () => {
 
           {tabValue === 2 && (
             <EnvironmentDetails
-              environment="production"
+              environment='production'
               release={release}
               handleEnvironmentChange={handleEnvironmentChange}
               renderSystemsCheckboxes={renderSystemsCheckboxes}

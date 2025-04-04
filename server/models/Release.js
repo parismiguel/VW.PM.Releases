@@ -11,23 +11,28 @@ const EnvironmentSchema = new mongoose.Schema({
   resources_responsible: { type: [String] }, // Array of tags
 });
 
-const ReleaseSchema = new mongoose.Schema({
-  product_name: { type: String, required: true },
-  release_version: { type: String, required: true },
-  release_type: { type: String, required: true },
-  status: { type: String, required: true },
-  staging: { type: EnvironmentSchema, required: true },
-  production: { type: EnvironmentSchema, required: true },
-  prerequisiteData: [
-    {
-      criteria: { type: String, required: true },
-      status: { type: Boolean, required: true },
-      exceptions: { type: String },
-    },
-  ],
-  jira_release_filter: { type: String },
-});
-
-module.exports = mongoose.model("Release", ReleaseSchema);
+const ReleaseSchema = new mongoose.Schema(
+  {
+    product_name: { type: String, required: true },
+    release_version: { type: String, required: true },
+    release_type: { type: String, required: true },
+    status: { type: String, required: true },
+    staging: { type: EnvironmentSchema, required: true },
+    production: { type: EnvironmentSchema, required: true },
+    prerequisiteData: [
+      {
+        criteria: { type: String, required: true },
+        status: { type: Boolean, required: true },
+        exceptions: { type: String },
+      },
+    ],
+    jira_release_filter: { type: String },
+    createdBy: { type: String, required: true },
+    modifiedBy: { type: String },
+  },
+  {
+    timestamps: { createdAt: "createdAt", updatedAt: "modifiedAt" }, // Automatically manage createdAt and modifiedAt
+  }
+);
 
 module.exports = mongoose.model("Release", ReleaseSchema);

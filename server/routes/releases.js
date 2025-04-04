@@ -31,9 +31,11 @@ router.post("/", async (req, res) => {
       release_version: req.body.release_version,
       release_type: req.body.release_type,
       status: req.body.status,
-      jira_release_filter: req.body.jira_release_filter, // Add this field
+      jira_release_filter: req.body.jira_release_filter,
       staging: req.body.staging,
       production: req.body.production,
+      prerequisiteData: req.body.prerequisiteData,
+      createdBy: req.body.createdBy, // Set createdBy from the request
     });
     await release.save();
     res.status(201).json(release);
@@ -52,10 +54,11 @@ router.put("/:id", async (req, res) => {
     release.release_version = req.body.release_version;
     release.release_type = req.body.release_type;
     release.status = req.body.status;
-    release.jira_release_filter = req.body.jira_release_filter; // Add this field
+    release.jira_release_filter = req.body.jira_release_filter;
     release.staging = req.body.staging;
     release.production = req.body.production;
     release.prerequisiteData = req.body.prerequisiteData;
+    release.modifiedBy = req.body.modifiedBy; // Set modifiedBy from the request
 
     await release.save();
     res.json(release);

@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const Release = require("../models/Release");
+const Docxtemplater = require("docxtemplater");
+const PizZip = require("pizzip");
+const fs = require("fs");
+const path = require("path");
 
 // Get all releases
 router.get("/", async (req, res) => {
@@ -100,8 +104,8 @@ router.get("/:id/document", async (req, res) => {
       linebreaks: true,
     });
 
-    // Set data for the template
-    doc.setData({
+    // Render the document with data
+    doc.render({
       product_name: release.product_name,
       release_version: release.release_version,
       release_type: release.release_type,
@@ -111,14 +115,6 @@ router.get("/:id/document", async (req, res) => {
       production_deployment_date: release.production?.deployment_date || "N/A",
       production_resources_responsible: release.production?.resources_responsible?.join(", ") || "N/A",
     });
-
-    // Render the document
-    try {
-      doc.render();
-    } catch (error) {
-      console.error("Error rendering document:", error);
-      return res.status(500).json({ message: "Error rendering document" });
-    }
 
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
 
@@ -134,6 +130,5 @@ router.get("/:id/document", async (req, res) => {
     res.status(500).json({ message: "Error generating document" });
   }
 });
-
 
 module.exports = router;

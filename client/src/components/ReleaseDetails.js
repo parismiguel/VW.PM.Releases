@@ -37,6 +37,7 @@ const ReleaseDetails = () => {
   const handleGenerateDocument = async () => {
     setLoading(true);
     try {
+      debugger
       const response = await axiosInstance.get(`/api/releases/${id}/document`, {
         responseType: "blob", // Important for file download
       });

@@ -1,14 +1,22 @@
 import React from "react";
-import { Box, Typography, TextField, Checkbox, FormControlLabel } from "@mui/material";
+import { Box, Typography, TextField, Checkbox, FormControlLabel, Alert } from "@mui/material";
 
-const GoNoGo = ({ goNoGo, handleGoNoGoChange }) => {
+const GoNoGo = ({ goNoGo, handleGoNoGoChange, disabled, validationMessage }) => {
   const groups = ["Development", "QA", "Product Management"];
-
+debugger
   return (
     <Box mt={2}>
       <Typography variant="h6" gutterBottom>
         Go / No Go
       </Typography>
+
+      {/* Show validation message if checkboxes are disabled */}
+      {disabled && validationMessage && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          {validationMessage}
+        </Alert>
+      )}
+
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr>
@@ -49,6 +57,10 @@ const GoNoGo = ({ goNoGo, handleGoNoGoChange }) => {
                         checked={goNoGo[group]?.[role]?.go || false}
                         onChange={(e) =>
                           handleGoNoGoChange(group, role, "go", e.target.checked)
+                        }
+                        disabled={
+                          disabled || // Disable if prerequisites or readiness are incomplete
+                          !goNoGo[group]?.[role]?.responsible // Disable if "Responsible" is empty
                         }
                       />
                     }

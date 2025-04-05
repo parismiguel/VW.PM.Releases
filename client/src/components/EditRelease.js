@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Typography,
@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getReleaseById, validateReleaseVersion, updateRelease } from "../services/releaseService";
+import { getReleaseById, updateRelease } from "../services/releaseService";
 import {
   productOptions,
   releaseTypeOptions,
@@ -37,10 +37,13 @@ import PostDeploymentIssues from "./PostDeploymentIssues";
 import KnownIssues from "./KnownIssues";
 import GoNoGo from "./GoNoGo";
 import Screenshots from "./Screenshots";
+import usePrompt from "../hooks/usePrompt"; 
 
 const EditRelease = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const initialStateRef = useRef(null); 
 
   const [release, setRelease] = useState(null);
   const [tabValue, setTabValue] = useState(0);
@@ -118,7 +121,144 @@ const EditRelease = () => {
       try {
         const data = await getReleaseById(id);
 
-        // Ensure `systems_impacted`, `target_servers`, and `prerequisiteData` are initialized
+        console.log("Fetched Release Data:", data);
+
+        // Initialize Go / No Go
+        const initializedGoNoGo = {
+          Development: {
+            Primary: data.goNoGo?.Development?.Primary || {
+              responsible: "",
+              go: false,
+            },
+            Backup: data.goNoGo?.Development?.Backup || {
+              responsible: "",
+              go: false,
+            },
+          },
+          QA: {
+            Primary: data.goNoGo?.QA?.Primary || { responsible: "", go: false },
+            Backup: data.goNoGo?.QA?.Backup || { responsible: "", go: false },
+          },
+          "Product Management": {
+            Primary: data.goNoGo?.["Product Management"]?.Primary || {
+              responsible: "",
+              go: false,
+            },
+            Backup: data.goNoGo?.["Product Management"]?.Backup || {
+              responsible: "",
+              go: false,
+            },
+          },
+        };
+
+        setGoNoGo(initializedGoNoGo);
+
+        // Initialize Known Issues
+        const initializedKnownIssues = Array.isArray(data.knownIssues)
+          ? data.knownIssues
+          : [
+              {
+                jiraItem: "",
+                sfSolution: "",
+                proposedRelease: "",
+                comments: "",
+              },
+            ];
+        setKnownIssues(initializedKnownIssues);
+
+        // Initialize Post Deployment Issues
+        const initializedPostDeploymentIssues = Array.isArray(
+          data.postDeploymentIssues
+        )
+          ? data.postDeploymentIssues
+          : [
+              {
+                id: "",
+                title: "",
+                sfSolution: "",
+                workItemType: "",
+                tfsRelease: "",
+                comments: "",
+              },
+            ];
+        setPostDeploymentIssues(initializedPostDeploymentIssues);
+
+        // Initialize Pre-Deployment Tasks
+        const initializedPreDeploymentTasks = Array.isArray(
+          data.preDeploymentTasks
+        )
+          ? data.preDeploymentTasks
+          : [
+              {
+                description: "",
+                completed: false,
+                notes: "",
+              },
+            ];
+        setPreDeploymentTasks(initializedPreDeploymentTasks);
+
+        // Initialize Risks
+        const initializedRisks = Array.isArray(data.risks)
+          ? data.risks
+          : [
+              {
+                risk: "",
+                remediation: "",
+              },
+            ];
+        setRisks(initializedRisks);
+
+        // Initialize Validation Tasks
+        const initializedValidationTasks = Array.isArray(data.validationTasks)
+          ? data.validationTasks
+          : [
+              {
+                repositoryName: "",
+                releaseLink: "",
+                resource: "",
+                beginEndTime: "",
+                stagingComments: "",
+                prodComments: "",
+              },
+            ];
+        setValidationTasks(initializedValidationTasks);
+
+        // Initialize Post Deployment Tasks
+        const initializedPostDeploymentTasks = Array.isArray(
+          data.postDeploymentTasks
+        )
+          ? data.postDeploymentTasks
+          : [
+              {
+                task: "",
+                resource: "",
+                beginEndTime: "",
+                stagingComments: "",
+                prodComments: "",
+              },
+            ];
+        setPostDeploymentTasks(initializedPostDeploymentTasks);
+
+        // Initialize Screenshots
+        const initializedScreenshots = Array.isArray(data.screenshots)
+          ? data.screenshots
+          : [];
+        setScreenshots(initializedScreenshots);
+
+        setPrerequisiteData(
+          Array.isArray(data.prerequisiteData) &&
+            data.prerequisiteData.length > 0
+            ? data.prerequisiteData
+            : preRequisites.data
+        );
+
+        setReadinessData(
+          Array.isArray(data.readinessData) && data.readinessData.length > 0
+            ? data.readinessData
+            : readiness.data
+        );
+
+        // Initialize Release Data
         const initializedRelease = {
           ...data,
           staging: {
@@ -134,18 +274,9 @@ const EditRelease = () => {
         };
 
         setRelease(initializedRelease);
-        setPrerequisiteData(
-          Array.isArray(data.prerequisiteData) &&
-            data.prerequisiteData.length > 0
-            ? data.prerequisiteData
-            : preRequisites.data
-        );
 
-        setReadinessData(
-          Array.isArray(data.readinessData) && data.readinessData.length > 0
-            ? data.readinessData
-            : readiness.data
-        );
+        initialStateRef.current = initializedRelease;
+
       } catch (error) {
         console.error("Error fetching release:", error);
       }
@@ -154,10 +285,53 @@ const EditRelease = () => {
     fetchRelease();
   }, [id]);
 
+  const isFormDirty = () => {
+    return JSON.stringify(release) !== JSON.stringify(initialStateRef.current);
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (isFormDirty()) {
+        e.preventDefault();
+        e.returnValue = ""; // Show a confirmation dialog
+      }
+    };
+  
+    window.addEventListener("beforeunload", handleBeforeUnload);
+  
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [release]);
+
+  usePrompt("You have unsaved changes. Are you sure you want to leave?", isFormDirty());
+
   const isGoNoGoValid = () => {
     return Object.values(goNoGo).every((group) =>
       Object.values(group).every((role) => role.go === true)
     );
+  };
+
+  const arePreRequisitesComplete = () => {
+    return prerequisiteData.every((item) => item.status === true);
+  };
+
+  const isReleaseReadinessComplete = () => {
+    return readinessData.every((item) => item.status === true);
+  };
+
+  const isGoNoGoEnabled = () => {
+    return arePreRequisitesComplete() && isReleaseReadinessComplete();
+  };
+
+  const getGoNoGoValidationMessage = () => {
+    if (!arePreRequisitesComplete()) {
+      return "Complete all Pre-Requisites to enable Go / No Go checkboxes.";
+    }
+    if (!isReleaseReadinessComplete()) {
+      return "Complete all Release Readiness items to enable Go / No Go checkboxes.";
+    }
+    return "";
   };
 
   const handleBack = () => navigate(`/releases/${id}`);
@@ -177,7 +351,9 @@ const EditRelease = () => {
 
     if (name === "status" && value === "Completed") {
       if (!isGoNoGoValid()) {
-        toast.error("All Go / No Go checkboxes must be true to set status to Completed.");
+        toast.error(
+          "All Go / No Go checkboxes must be true to set status to Completed."
+        );
         return;
       }
     }
@@ -424,6 +600,9 @@ const EditRelease = () => {
 
       await updateRelease(id, updatedRelease);
       toast.success("Release updated successfully!");
+      
+      initialStateRef.current = updatedRelease; 
+
     } catch (error) {
       console.error("Error updating release:", error);
       setAlertMessage("An error occurred while updating the release.");
@@ -687,7 +866,12 @@ const EditRelease = () => {
           )}
 
           {tabValue === 11 && (
-            <GoNoGo goNoGo={goNoGo} handleGoNoGoChange={handleGoNoGoChange} />
+            <GoNoGo
+              goNoGo={goNoGo}
+              handleGoNoGoChange={handleGoNoGoChange}
+              disabled={!isGoNoGoEnabled()}
+              validationMessage={getGoNoGoValidationMessage()}
+            />
           )}
 
           {tabValue === 12 && (

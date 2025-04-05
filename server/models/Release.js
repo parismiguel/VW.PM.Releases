@@ -12,27 +12,27 @@ const EnvironmentSchema = new mongoose.Schema({
 });
 
 const PrerequisiteSchema = new mongoose.Schema({
-  criteria: { type: String, required: true }, // Prerequisite criteria description
-  status: { type: Boolean, required: true }, // Status (true/false)
+  criteria: { type: String }, // Prerequisite criteria description
+  status: { type: Boolean}, // Status (true/false)
   exceptions: { type: String }, // Comments or exceptions
 });
 
 const ReadinessSchema = new mongoose.Schema({
-  criteria: { type: String, required: true }, // Readiness criteria description
-  status: { type: Boolean, required: true }, // Status (true/false)
+  criteria: { type: String }, // Readiness criteria description
+  status: { type: Boolean }, // Status (true/false)
   exceptions: { type: String }, // Comments or exceptions
 });
 
 const PreDeploymentTaskSchema = new mongoose.Schema({
-  description: { type: String, required: true },
+  description: { type: String },
   owner: { type: String },
   stagingComplete: { type: Boolean, default: false },
   prodComplete: { type: Boolean, default: false },
 });
 
 const RiskSchema = new mongoose.Schema({
-  risk: { type: String, required: true },
-  remediation: { type: String, required: true },
+  risk: { type: String },
+  remediation: { type: String },
 });
 
 const ValidationTaskSchema = new mongoose.Schema({
@@ -73,6 +73,11 @@ const GoNoGoSchema = new mongoose.Schema({
   go: { type: Boolean },
 });
 
+const ScreenshotSchema = new mongoose.Schema({
+  filename: { type: String, required: true },
+  url: { type: String, required: true },
+});
+
 
 const ReleaseSchema = new mongoose.Schema(
   {
@@ -80,8 +85,9 @@ const ReleaseSchema = new mongoose.Schema(
     release_version: { type: String, required: true },
     release_type: { type: String, required: true },
     status: { type: String, required: true },
-    staging: { type: EnvironmentSchema, required: true },
-    production: { type: EnvironmentSchema, required: true },
+    jira_release_filter: { type: String },
+    staging: { type: EnvironmentSchema },
+    production: { type: EnvironmentSchema },
     prerequisiteData: [PrerequisiteSchema],
     readinessData: [ReadinessSchema],
     preDeploymentTasks: [PreDeploymentTaskSchema],
@@ -95,7 +101,7 @@ const ReleaseSchema = new mongoose.Schema(
       QA: { Primary: GoNoGoSchema, Backup: GoNoGoSchema },
       "Product Management": { Primary: GoNoGoSchema, Backup: GoNoGoSchema },
     },
-    jira_release_filter: { type: String },
+    screenshots: [ScreenshotSchema],
     createdBy: { type: String, required: true },
     modifiedBy: { type: String },
   },

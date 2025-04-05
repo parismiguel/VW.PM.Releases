@@ -14,6 +14,8 @@ import {
   MenuItem,
   Autocomplete,
 } from "@mui/material";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const CreateRelease = () => {
   const [formData, setFormData] = useState({
@@ -79,9 +81,15 @@ const CreateRelease = () => {
 
     try {
       const res = await axiosInstance.post("/api/releases", formData);
+      toast.success("Release created successfully!");
       navigate(`/releases/${res.data._id}`);
     } catch (err) {
-      console.error("Error creating release:", err);
+      if (err.response && err.response.status === 400) {
+        toast.error(err.response.data.message); // Show error message from the backend
+      } else {
+        console.error("Error creating release:", err);
+        toast.error("An unexpected error occurred while creating the release.");
+      }
     }
   };
 
@@ -220,6 +228,7 @@ const CreateRelease = () => {
           </Stack>
         </form>
       </Box>
+      <ToastContainer />
     </Container>
   );
 };

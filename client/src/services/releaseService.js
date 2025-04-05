@@ -10,6 +10,15 @@ export const getReleaseById = async (id) => {
   }
 };
 
+export const validateReleaseVersion = async (version) => {
+  try {
+    const response = await axiosInstance.get(`/api/releases/validate-version/${version}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data?.message || "Error validating release version";
+  }
+};
+
 export const updateRelease = async (id, releaseData) => {
   try {
     const response = await axiosInstance.put(`/api/releases/${id}`, releaseData);

@@ -63,6 +63,8 @@ app.use("/api/releases", basicAuth({
   challenge: true,
 }), require("./routes/releases"));
 
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Serve static files from client build in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));

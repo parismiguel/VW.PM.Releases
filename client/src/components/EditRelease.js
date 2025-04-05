@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getReleaseById, updateRelease } from "../services/releaseService";
+import { getReleaseById, validateReleaseVersion, updateRelease } from "../services/releaseService";
 import {
   productOptions,
   releaseTypeOptions,
@@ -395,6 +395,8 @@ const EditRelease = () => {
     }
 
     try {
+      await validateReleaseVersion(release.release_version);
+
       const updatedRelease = {
         ...release,
         prerequisiteData,
@@ -547,11 +549,16 @@ const EditRelease = () => {
             value={tabValue}
             onChange={handleTabChange}
             aria-label='edit release tabs'
-            variant='scrollable' // Make tabs scrollable
-            scrollButtons='auto' // Show scroll buttons automatically when needed
+            variant='scrollable'
+            scrollButtons='auto'
             sx={{
               mt: 2,
               borderBottom: "1px solid #ccc",
+              display: "flex",
+              flexWrap: "wrap", // Allow tabs to wrap into multiple rows
+              "& .MuiTabs-flexContainer": {
+                flexWrap: "wrap", // Ensure the tab container wraps
+              },
             }}
           >
             <Tab label='Common Info' />
@@ -676,6 +683,7 @@ const EditRelease = () => {
             <Screenshots
               screenshots={screenshots}
               setScreenshots={setScreenshots}
+              releaseId={id}
             />
           )}
 

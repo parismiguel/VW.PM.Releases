@@ -27,8 +27,27 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.get("/validate-version/:version", async (req, res) => {
+  try {
+    const { version } = req.params;
+    const existingRelease = await Release.findOne({ release_version: version });
+    if (existingRelease) {
+      return res.status(400).json({ message: "Release version already exists" });
+    }
+    res.status(200).json({ message: "Release version is valid" });
+  } catch (err) {
+    console.error("Error validating release version:", err);
+    res.status(500).json({ message: "Error validating release version" });
+  }
+});
+
 // Create a new release
 router.post("/", async (req, res) => {
+  const existingRelease = await Release.findOne({ release_version: req.body.release_version });
+  if (existingRelease) {
+    return res.status(400).json({ message: "Release version already exists" });
+  }
+  
   try {
     const release = new Release({
       product_name: req.body.product_name,
@@ -112,6 +131,8 @@ router.get("/:id/document", async (req, res) => {
     }
 
     const content = fs.readFileSync(templatePath, "binary");
+    console.log("Template content length:", content.length);
+
     const zip = new PizZip(content);
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
@@ -119,130 +140,133 @@ router.get("/:id/document", async (req, res) => {
     });
 
     // Render the document with data
-    doc.render({
+    const data = {
       // Common Information
-      product_name: release.product_name,
-      release_version: release.release_version,
-      release_type: release.release_type,
-      status: release.status,
-      jira_release_filter: release.jira_release_filter || "N/A",
-
+      productName: release.product_name || "N/A",
+      releaseVersion: release.release_version || "N/A",
+      releaseType: release.release_type || "N/A",
+      status: release.status || "N/A",
+      jiraReleaseFilter: release.jira_release_filter || "N/A",
+      
       // Audit Information
-      created_at: new Date(release.createdAt).toLocaleString(),
-      created_by: release.createdBy || "N/A",
-      modified_at: new Date(release.modifiedAt).toLocaleString(),
-      modified_by: release.modifiedBy || "N/A",
-
+      createdAt: new Date(release.createdAt).toLocaleString(),
+      createdBy: release.createdBy || "N/A",
+      modifiedAt: new Date(release.modifiedAt).toLocaleString(),
+      modifiedBy: release.modifiedBy || "N/A",
+      
       // Staging Environment
-      staging_deployment_date: release.staging?.deployment_date || "N/A",
-      staging_deployment_time: release.staging?.deployment_time || "N/A",
-      staging_deployment_duration: release.staging?.deployment_duration || "N/A",
-      staging_downtime: release.staging?.downtime || "N/A",
-      staging_informed_resources: release.staging?.informed_resources
-        ? "Yes"
-        : "No",
-      staging_systems_impacted: release.staging?.systems_impacted?.join(", ") || "N/A",
-      staging_target_servers: release.staging?.target_servers?.join(", ") || "N/A",
-      staging_resources_responsible: release.staging?.resources_responsible?.join(", ") || "N/A",
+      stagingDeploymentDate: release.staging?.deployment_date || "N/A",
+      stagingDeploymentTime: release.staging?.deployment_time || "N/A",
+      stagingDeploymentDuration: release.staging?.deployment_duration || "N/A",
+      stagingDowntime: release.staging?.downtime || "N/A",
+      stagingInformedResources: release.staging?.informed_resources
+      ? "Yes"
+      : "No",
+      stagingSystemsImpacted: release.staging?.systems_impacted?.join(", ") || "N/A",
+      stagingTargetServers: release.staging?.target_servers?.join(", ") || "N/A",
+      stagingResourcesResponsible: release.staging?.resources_responsible?.join(", ") || "N/A",
 
       // Production Environment
-      production_deployment_date: release.production?.deployment_date || "N/A",
-      production_deployment_time: release.production?.deployment_time || "N/A",
-      production_deployment_duration: release.production?.deployment_duration || "N/A",
-      production_downtime: release.production?.downtime || "N/A",
-      production_informed_resources: release.production?.informed_resources
-        ? "Yes"
-        : "No",
-      production_systems_impacted: release.production?.systems_impacted?.join(", ") || "N/A",
-      production_target_servers: release.production?.target_servers?.join(", ") || "N/A",
-      production_resources_responsible: release.production?.resources_responsible?.join(", ") || "N/A",
+      productionDeploymentDate: release.production?.deployment_date || "N/A",
+      productionDeploymentTime: release.production?.deployment_time || "N/A",
+      productionDeploymentDuration: release.production?.deployment_duration || "N/A",
+      productionDowntime: release.production?.downtime || "N/A",
+      productionInformedResources: release.production?.informed_resources
+      ? "Yes"
+      : "No",
+      productionSystemsImpacted: release.production?.systems_impacted?.join(", ") || "N/A",
+      productionTargetServers: release.production?.target_servers?.join(", ") || "N/A",
+      productionResourcesResponsible: release.production?.resources_responsible?.join(", ") || "N/A",
 
       // Pre-Requisite Checklist
-      prerequisite_data: release.prerequisiteData.map((item, index) => ({
-        seq: index + 1,
-        criteria: item.criteria,
-        status: item.status ? "Complete" : "Incomplete",
-        exceptions: item.exceptions || "N/A",
+      prerequisiteData: release.prerequisiteData.map((item, index) => ({
+      seq: index + 1,
+      criteria: item.criteria,
+      status: item.status ? "Complete" : "Incomplete",
+      exceptions: item.exceptions || "N/A",
       })),
 
       // Readiness Checklist
-      readiness_data: release.readinessData.map((item, index) => ({
-        seq: index + 1,
-        criteria: item.criteria,
-        status: item.status ? "Complete" : "Incomplete",
-        exceptions: item.exceptions || "N/A",
+      readinessData: release.readinessData.map((item, index) => ({
+      seq: index + 1,
+      criteria: item.criteria,
+      status: item.status ? "Complete" : "Incomplete",
+      exceptions: item.exceptions || "N/A",
       })),
 
       // Pre-Deployment Tasks
-      pre_deployment_tasks: release.preDeploymentTasks.map((task, index) => ({
-        seq: index + 1,
-        description: task.description,
-        owner: task.owner || "N/A",
-        staging_complete: task.stagingComplete ? "Yes" : "No",
-        prod_complete: task.prodComplete ? "Yes" : "No",
+      preDeploymentTasks: release.preDeploymentTasks.map((task, index) => ({
+      seq: index + 1,
+      description: task.description,
+      owner: task.owner || "N/A",
+      stagingComplete: task.stagingComplete ? "Yes" : "No",
+      prodComplete: task.prodComplete ? "Yes" : "No",
       })),
 
       // Deployment Risks
       risks: release.risks.map((risk, index) => ({
-        seq: index + 1,
-        risk: risk.risk,
-        remediation: risk.remediation,
+      seq: index + 1,
+      risk: risk.risk,
+      remediation: risk.remediation,
       })),
 
       // Validation Tasks
-      validation_tasks: release.validationTasks.map((task, index) => ({
-        seq: index + 1,
-        repository_name: task.repositoryName || "N/A",
-        release_link: task.releaseLink || "N/A",
-        resource: task.resource || "N/A",
-        begin_end_time: task.beginEndTime || "N/A",
-        staging_comments: task.stagingComments || "N/A",
-        prod_comments: task.prodComments || "N/A",
+      validationTasks: release.validationTasks.map((task, index) => ({
+      seq: index + 1,
+      repositoryName: task.repositoryName || "N/A",
+      releaseLink: task.releaseLink || "N/A",
+      resource: task.resource || "N/A",
+      beginEndTime: task.beginEndTime || "N/A",
+      stagingComments: task.stagingComments || "N/A",
+      prodComments: task.prodComments || "N/A",
       })),
 
       // Post-Deployment Tasks
-      post_deployment_tasks: release.postDeploymentTasks.map((task, index) => ({
-        seq: index + 1,
-        task: task.task,
-        resource: task.resource || "N/A",
-        begin_end_time: task.beginEndTime || "N/A",
-        staging_comments: task.stagingComments || "N/A",
-        prod_comments: task.prodComments || "N/A",
+      postDeploymentTasks: release.postDeploymentTasks.map((task, index) => ({
+      seq: index + 1,
+      task: task.task,
+      resource: task.resource || "N/A",
+      beginEndTime: task.beginEndTime || "N/A",
+      stagingComments: task.stagingComments || "N/A",
+      prodComments: task.prodComments || "N/A",
       })),
 
       // Post-Deployment Issues
-      post_deployment_issues: release.postDeploymentIssues.map((issue, index) => ({
-        seq: index + 1,
-        id: issue.id || "N/A",
-        title: issue.title || "N/A",
-        sf_solution: issue.sfSolution || "N/A",
-        work_item_type: issue.workItemType || "N/A",
-        tfs_release: issue.tfsRelease || "N/A",
-        comments: issue.comments || "N/A",
+      postDeploymentIssues: release.postDeploymentIssues.map((issue, index) => ({
+      seq: index + 1,
+      id: issue.id || "N/A",
+      title: issue.title || "N/A",
+      sfSolution: issue.sfSolution || "N/A",
+      workItemType: issue.workItemType || "N/A",
+      tfsRelease: issue.tfsRelease || "N/A",
+      comments: issue.comments || "N/A",
       })),
 
       // Known Issues
-      known_issues: release.knownIssues.map((issue, index) => ({
-        seq: index + 1,
-        jira_item: issue.jiraItem || "N/A",
-        sf_solution: issue.sfSolution || "N/A",
-        proposed_release: issue.proposedRelease || "N/A",
-        comments: issue.comments || "N/A",
+      knownIssues: release.knownIssues.map((issue, index) => ({
+      seq: index + 1,
+      jiraItem: issue.jiraItem || "N/A",
+      sfSolution: issue.sfSolution || "N/A",
+      proposedRelease: issue.proposedRelease || "N/A",
+      comments: issue.comments || "N/A",
       })),
 
       // Go / No Go
-      go_no_go: Object.entries(release.goNoGo).map(([group, roles]) => ({
-        group,
-        primary_responsible: roles.Primary.responsible || "N/A",
-        primary_go: roles.Primary.go ? "Yes" : "No",
-        backup_responsible: roles.Backup.responsible || "N/A",
-        backup_go: roles.Backup.go ? "Yes" : "No",
+      goNoGo: Object.entries(release.goNoGo).map(([group, roles]) => ({
+      group,
+      primaryResponsible: roles.Primary.responsible || "N/A",
+      primaryGo: roles.Primary.go ? "Yes" : "No",
+      backupResponsible: roles.Backup.responsible || "N/A",
+      backupGo: roles.Backup.go ? "Yes" : "No",
       })),
-    });
+    };
+
+    console.log("Data for template:", data);
+
+    doc.render(data);
 
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
 
-    // Set headers and send the document
     res.set({
       "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "Content-Disposition": `attachment; filename=${release.product_name}_${release.release_version}.docx`,
@@ -252,6 +276,81 @@ router.get("/:id/document", async (req, res) => {
   } catch (err) {
     console.error("Error generating document:", err);
     res.status(500).json({ message: "Error generating document" });
+  }
+});
+
+const multer = require("multer");
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); 
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
+
+router.get("/:id/screenshots", async (req, res) => {
+  try {
+    const release = await Release.findById(req.params.id);
+    if (!release) return res.status(404).json({ message: "Release not found" });
+
+    res.status(200).json(release.screenshots);
+  } catch (err) {
+    console.error("Error fetching screenshots:", err);
+    res.status(500).json({ message: "Error fetching screenshots" });
+  }
+});
+
+// Upload screenshots
+router.post("/:id/screenshots", upload.array("screenshots"), async (req, res) => {
+  try {
+    const release = await Release.findById(req.params.id);
+    if (!release) return res.status(404).json({ message: "Release not found" });
+
+    const serverUrl = `${req.protocol}://${req.get("host")}`; // Get the server URL base
+
+    const screenshots = req.files.map((file) => ({
+      filename: file.filename,
+      url: `${serverUrl}/uploads/${file.filename}`, // Include the server URL base
+    }));
+
+    release.screenshots.push(...screenshots);
+    await release.save();
+
+    res.status(200).json(release.screenshots);
+  } catch (err) {
+    console.error("Error uploading screenshots:", err);
+    res.status(500).json({ message: "Error uploading screenshots" });
+  }
+});
+
+// Delete a screenshot
+router.delete("/:id/screenshots/:filename", async (req, res) => {
+  try {
+    const { id, filename } = req.params;
+    const release = await Release.findById(id);
+    if (!release) return res.status(404).json({ message: "Release not found" });
+
+    // Remove the screenshot from the database
+    release.screenshots = release.screenshots.filter(
+      (screenshot) => screenshot.filename !== filename
+    );
+
+    await release.save();
+
+    // Delete the file from the uploads directory
+    const filePath = `uploads/${filename}`;
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    res.status(200).json(release.screenshots);
+  } catch (err) {
+    console.error("Error deleting screenshot:", err);
+    res.status(500).json({ message: "Error deleting screenshot" });
   }
 });
 

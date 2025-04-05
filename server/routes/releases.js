@@ -3,6 +3,7 @@ const router = express.Router();
 const Release = require("../models/Release");
 const Docxtemplater = require("docxtemplater");
 const PizZip = require("pizzip");
+
 const fs = require("fs");
 const path = require("path");
 
@@ -32,7 +33,9 @@ router.get("/validate-version/:version", async (req, res) => {
     const { version } = req.params;
     const existingRelease = await Release.findOne({ release_version: version });
     if (existingRelease) {
-      return res.status(400).json({ message: "Release version already exists" });
+      return res
+        .status(400)
+        .json({ message: "Release version already exists" });
     }
     res.status(200).json({ message: "Release version is valid" });
   } catch (err) {
@@ -43,7 +46,9 @@ router.get("/validate-version/:version", async (req, res) => {
 
 // Create a new release
 router.post("/", async (req, res) => {
-  const existingRelease = await Release.findOne({ release_version: req.body.release_version });
+  const existingRelease = await Release.findOne({
+    release_version: req.body.release_version,
+  });
   if (existingRelease) {
     return res.status(400).json({ message: "Release version already exists" });
   }
@@ -64,7 +69,7 @@ router.post("/", async (req, res) => {
       validationTasks: req.body.validationTasks,
       postDeploymentTasks: req.body.postDeploymentTasks,
       postDeploymentIssues: req.body.postDeploymentIssues,
-      knownIssues: req.body.knownIssues, 
+      knownIssues: req.body.knownIssues,
       goNoGo: req.body.goNoGo,
       createdBy: req.body.createdBy,
     });
@@ -84,9 +89,11 @@ router.put("/:id", async (req, res) => {
     });
 
     if (existingRelease) {
-      return res.status(400).json({ message: "Release version already exists" });
+      return res
+        .status(400)
+        .json({ message: "Release version already exists" });
     }
-    
+
     const release = await Release.findById(req.params.id);
     if (!release) return res.status(404).json({ message: "Release not found" });
 
@@ -102,8 +109,8 @@ router.put("/:id", async (req, res) => {
     release.preDeploymentTasks = req.body.preDeploymentTasks;
     release.risks = req.body.risks;
     release.validationTasks = req.body.validationTasks;
-    release.postDeploymentTasks = req.body.postDeploymentTasks; 
-    release.postDeploymentIssues = req.body.postDeploymentIssues; 
+    release.postDeploymentTasks = req.body.postDeploymentTasks;
+    release.postDeploymentIssues = req.body.postDeploymentIssues;
     release.knownIssues = req.body.knownIssues;
     release.goNoGo = req.body.goNoGo;
     release.modifiedBy = req.body.modifiedBy;
@@ -135,7 +142,9 @@ router.get("/:id/document", async (req, res) => {
 
     // Load the template file
     const templatePath = path.join(__dirname, "../template.docx");
+
     if (!fs.existsSync(templatePath)) {
+      console.error("Template file not found at:", templatePath);
       return res.status(500).json({ message: "Template file not found" });
     }
 
@@ -143,9 +152,12 @@ router.get("/:id/document", async (req, res) => {
     console.log("Template content length:", content.length);
 
     const zip = new PizZip(content);
+    console.log("Zip content keys:", Object.keys(zip.files));
+
     const doc = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
+      delimiters: { start: "{{", end: "}}" },
     });
 
     // Render the document with data
@@ -156,128 +168,151 @@ router.get("/:id/document", async (req, res) => {
       releaseType: release.release_type || "N/A",
       status: release.status || "N/A",
       jiraReleaseFilter: release.jira_release_filter || "N/A",
-      
+
       // Audit Information
       createdAt: new Date(release.createdAt).toLocaleString(),
       createdBy: release.createdBy || "N/A",
       modifiedAt: new Date(release.modifiedAt).toLocaleString(),
       modifiedBy: release.modifiedBy || "N/A",
-      
+
       // Staging Environment
       stagingDeploymentDate: release.staging?.deployment_date || "N/A",
       stagingDeploymentTime: release.staging?.deployment_time || "N/A",
       stagingDeploymentDuration: release.staging?.deployment_duration || "N/A",
       stagingDowntime: release.staging?.downtime || "N/A",
       stagingInformedResources: release.staging?.informed_resources
-      ? "Yes"
-      : "No",
-      stagingSystemsImpacted: release.staging?.systems_impacted?.join(", ") || "N/A",
-      stagingTargetServers: release.staging?.target_servers?.join(", ") || "N/A",
-      stagingResourcesResponsible: release.staging?.resources_responsible?.join(", ") || "N/A",
+        ? "Yes"
+        : "No",
+      stagingSystemsImpacted:
+        release.staging?.systems_impacted?.join(", ") || "N/A",
+      stagingTargetServers:
+        release.staging?.target_servers?.join(", ") || "N/A",
+      stagingResourcesResponsible:
+        release.staging?.resources_responsible?.join(", ") || "N/A",
 
       // Production Environment
       productionDeploymentDate: release.production?.deployment_date || "N/A",
       productionDeploymentTime: release.production?.deployment_time || "N/A",
-      productionDeploymentDuration: release.production?.deployment_duration || "N/A",
+      productionDeploymentDuration:
+        release.production?.deployment_duration || "N/A",
       productionDowntime: release.production?.downtime || "N/A",
       productionInformedResources: release.production?.informed_resources
-      ? "Yes"
-      : "No",
-      productionSystemsImpacted: release.production?.systems_impacted?.join(", ") || "N/A",
-      productionTargetServers: release.production?.target_servers?.join(", ") || "N/A",
-      productionResourcesResponsible: release.production?.resources_responsible?.join(", ") || "N/A",
+        ? "Yes"
+        : "No",
+      productionSystemsImpacted:
+        release.production?.systems_impacted?.join(", ") || "N/A",
+      productionTargetServers:
+        release.production?.target_servers?.join(", ") || "N/A",
+      productionResourcesResponsible:
+        release.production?.resources_responsible?.join(", ") || "N/A",
 
       // Pre-Requisite Checklist
       prerequisiteData: release.prerequisiteData.map((item, index) => ({
-      seq: index + 1,
-      criteria: item.criteria,
-      status: item.status ? "Complete" : "Incomplete",
-      exceptions: item.exceptions || "N/A",
+        seq: index + 1,
+        criteria: item.criteria,
+        status: item.status ? "Complete" : "Incomplete",
+        exceptions: item.exceptions || "N/A",
       })),
 
       // Readiness Checklist
       readinessData: release.readinessData.map((item, index) => ({
-      seq: index + 1,
-      criteria: item.criteria,
-      status: item.status ? "Complete" : "Incomplete",
-      exceptions: item.exceptions || "N/A",
+        seq: index + 1,
+        criteria: item.criteria,
+        status: item.status ? "Complete" : "Incomplete",
+        exceptions: item.exceptions || "N/A",
       })),
 
       // Pre-Deployment Tasks
       preDeploymentTasks: release.preDeploymentTasks.map((task, index) => ({
-      seq: index + 1,
-      description: task.description,
-      owner: task.owner || "N/A",
-      stagingComplete: task.stagingComplete ? "Yes" : "No",
-      prodComplete: task.prodComplete ? "Yes" : "No",
+        seq: index + 1,
+        description: task.description,
+        owner: task.owner || "N/A",
+        stagingComplete: task.stagingComplete ? "Yes" : "No",
+        prodComplete: task.prodComplete ? "Yes" : "No",
       })),
 
       // Deployment Risks
       risks: release.risks.map((risk, index) => ({
-      seq: index + 1,
-      risk: risk.risk,
-      remediation: risk.remediation,
+        seq: index + 1,
+        risk: risk.risk,
+        remediation: risk.remediation,
       })),
 
       // Validation Tasks
       validationTasks: release.validationTasks.map((task, index) => ({
-      seq: index + 1,
-      repositoryName: task.repositoryName || "N/A",
-      releaseLink: task.releaseLink || "N/A",
-      resource: task.resource || "N/A",
-      beginEndTime: task.beginEndTime || "N/A",
-      stagingComments: task.stagingComments || "N/A",
-      prodComments: task.prodComments || "N/A",
+        seq: index + 1,
+        repositoryName: task.repositoryName || "N/A",
+        releaseLink: task.releaseLink || "N/A",
+        resource: task.resource || "N/A",
+        beginEndTime: task.beginEndTime || "N/A",
+        stagingComments: task.stagingComments || "N/A",
+        prodComments: task.prodComments || "N/A",
       })),
 
       // Post-Deployment Tasks
       postDeploymentTasks: release.postDeploymentTasks.map((task, index) => ({
-      seq: index + 1,
-      task: task.task,
-      resource: task.resource || "N/A",
-      beginEndTime: task.beginEndTime || "N/A",
-      stagingComments: task.stagingComments || "N/A",
-      prodComments: task.prodComments || "N/A",
+        seq: index + 1,
+        task: task.task,
+        resource: task.resource || "N/A",
+        beginEndTime: task.beginEndTime || "N/A",
+        stagingComments: task.stagingComments || "N/A",
+        prodComments: task.prodComments || "N/A",
       })),
 
       // Post-Deployment Issues
-      postDeploymentIssues: release.postDeploymentIssues.map((issue, index) => ({
-      seq: index + 1,
-      id: issue.id || "N/A",
-      title: issue.title || "N/A",
-      sfSolution: issue.sfSolution || "N/A",
-      workItemType: issue.workItemType || "N/A",
-      tfsRelease: issue.tfsRelease || "N/A",
-      comments: issue.comments || "N/A",
-      })),
+      postDeploymentIssues: release.postDeploymentIssues.map(
+        (issue, index) => ({
+          seq: index + 1,
+          id: issue.id || "N/A",
+          title: issue.title || "N/A",
+          sfSolution: issue.sfSolution || "N/A",
+          workItemType: issue.workItemType || "N/A",
+          tfsRelease: issue.tfsRelease || "N/A",
+          comments: issue.comments || "N/A",
+        })
+      ),
 
       // Known Issues
       knownIssues: release.knownIssues.map((issue, index) => ({
-      seq: index + 1,
-      jiraItem: issue.jiraItem || "N/A",
-      sfSolution: issue.sfSolution || "N/A",
-      proposedRelease: issue.proposedRelease || "N/A",
-      comments: issue.comments || "N/A",
+        seq: index + 1,
+        jiraItem: issue.jiraItem || "N/A",
+        sfSolution: issue.sfSolution || "N/A",
+        proposedRelease: issue.proposedRelease || "N/A",
+        comments: issue.comments || "N/A",
       })),
 
       // Go / No Go
       goNoGo: Object.entries(release.goNoGo).map(([group, roles]) => ({
-      group,
-      primaryResponsible: roles.Primary.responsible || "N/A",
-      primaryGo: roles.Primary.go ? "Yes" : "No",
-      backupResponsible: roles.Backup.responsible || "N/A",
-      backupGo: roles.Backup.go ? "Yes" : "No",
+        group,
+        primaryResponsible: roles.Primary.responsible || "N/A",
+        primaryGo: roles.Primary.go ? "Yes" : "No",
+        backupResponsible: roles.Backup.responsible || "N/A",
+        backupGo: roles.Backup.go ? "Yes" : "No",
+      })),
+
+      screenshots: release.screenshots.map((screenshot, index) => ({
+        url: screenshot.url,
       })),
     };
 
-    console.log("Data for template:", data);
+    console.log("Data for template rendering:", JSON.stringify(data, null, 2));
 
-    doc.render(data);
+    try {
+      doc.render(data);
+    } catch (error) {
+      console.error("Error rendering document:", error);
+      if (error.properties && error.properties.errors) {
+        console.error("Template errors:", error.properties.errors);
+      }
+      return res.status(500).json({ message: "Error rendering document" });
+    }
 
     const buffer = doc.getZip().generate({ type: "nodebuffer" });
+    console.log("Generated document buffer size:", buffer.length);
 
     res.set({
-      "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "Content-Type":
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "Content-Disposition": `attachment; filename=${release.product_name}_${release.release_version}.docx`,
     });
 
@@ -292,7 +327,7 @@ const multer = require("multer");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); 
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     cb(null, `${Date.now()}-${file.originalname}`);
@@ -314,27 +349,32 @@ router.get("/:id/screenshots", async (req, res) => {
 });
 
 // Upload screenshots
-router.post("/:id/screenshots", upload.array("screenshots"), async (req, res) => {
-  try {
-    const release = await Release.findById(req.params.id);
-    if (!release) return res.status(404).json({ message: "Release not found" });
+router.post(
+  "/:id/screenshots",
+  upload.array("screenshots"),
+  async (req, res) => {
+    try {
+      const release = await Release.findById(req.params.id);
+      if (!release)
+        return res.status(404).json({ message: "Release not found" });
 
-    const serverUrl = `${req.protocol}://${req.get("host")}`; // Get the server URL base
+      const serverUrl = `${req.protocol}://${req.get("host")}`; // Get the server URL base
 
-    const screenshots = req.files.map((file) => ({
-      filename: file.filename,
-      url: `${serverUrl}/uploads/${file.filename}`, // Include the server URL base
-    }));
+      const screenshots = req.files.map((file) => ({
+        filename: file.filename,
+        url: `${serverUrl}/uploads/${file.filename}`, // Include the server URL base
+      }));
 
-    release.screenshots.push(...screenshots);
-    await release.save();
+      release.screenshots.push(...screenshots);
+      await release.save();
 
-    res.status(200).json(release.screenshots);
-  } catch (err) {
-    console.error("Error uploading screenshots:", err);
-    res.status(500).json({ message: "Error uploading screenshots" });
+      res.status(200).json(release.screenshots);
+    } catch (err) {
+      console.error("Error uploading screenshots:", err);
+      res.status(500).json({ message: "Error uploading screenshots" });
+    }
   }
-});
+);
 
 // Delete a screenshot
 router.delete("/:id/screenshots/:filename", async (req, res) => {

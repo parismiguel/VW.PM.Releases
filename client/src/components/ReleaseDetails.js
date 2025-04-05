@@ -64,50 +64,61 @@ const ReleaseDetails = () => {
   if (!release) return <Typography>Loading...</Typography>;
 
   return (
-    <Container maxWidth='md'>
+    <Container maxWidth="md">
       <Box mt={4} mb={4}>
-        <Typography variant='h4' gutterBottom>
+        <Typography variant="h4" gutterBottom>
           {release.product_name} - {release.release_version}
         </Typography>
 
-        <Paper elevation={1} sx={{ p: 2 }}>
-          <Typography variant='h6'>Common Information</Typography>
-          <Typography>Type: {release.release_type}</Typography>
-          <Typography>Status: {release.status}</Typography>
-          <Typography>
-            JIRA Release Filter:{" "}
-            {release.jira_release_filter ? (
-              <a
-                href={release.jira_release_filter}
-                target='_blank'
-                rel='noopener noreferrer'
-              >
-                {release.jira_release_filter}
-              </a>
-            ) : (
-              "N/A"
-            )}
-          </Typography>
-        </Paper>
+        <Box mt={2}>
+          <Paper elevation={1} sx={{ p: 2 }}>
+            <Typography variant="h6">Common Information</Typography>
+            <Typography>Type: {release.release_type}</Typography>
+            <Typography>Status: {release.status}</Typography>
+            <Typography>
+              JIRA Release Filter:{" "}
+              {release.jira_release_filter ? (
+                <a
+                  href={release.jira_release_filter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {release.jira_release_filter}
+                </a>
+              ) : (
+                "N/A"
+              )}
+            </Typography>
+          </Paper>
+        </Box>
 
-        <Paper elevation={1} sx={{ p: 2 }}>
-          <Typography variant='h6'>Audit Information</Typography>
-          <Typography>
-            Created At: {new Date(release.createdAt).toLocaleString()}
-          </Typography>
-          <Typography>Created By: {release.createdBy || "N/A"}</Typography>
-          <Typography>
-            Last Modified At: {new Date(release.modifiedAt).toLocaleString()}
-          </Typography>
-          <Typography>
-            Last Modified By: {release.modifiedBy || "N/A"}
-          </Typography>
-        </Paper>
+        <Box mt={2}>
+          <Paper elevation={1} sx={{ p: 2 }}>
+            <Typography variant="h6">Audit Information</Typography>
+            <Typography>
+              Created At: {new Date(release.createdAt).toLocaleString()}
+            </Typography>
+            <Typography>Created By: {release.createdBy || "N/A"}</Typography>
+            <Typography>
+              Last Modified At: {new Date(release.modifiedAt).toLocaleString()}
+            </Typography>
+            <Typography>
+              Last Modified By: {release.modifiedBy || "N/A"}
+            </Typography>
+          </Paper>
+        </Box>
 
         {/* Staging Environment */}
         <Box mt={2}>
-          <Paper elevation={1} sx={{ p: 2 }}>
-            <Typography variant='h6'>Staging</Typography>
+          <Paper
+            elevation={1}
+            sx={{
+              p: 2,
+              backgroundColor: "orange", // Set background color to orange
+              color: "white", // Ensure text is visible
+            }}
+          >
+            <Typography variant="h6">Staging</Typography>
             <Typography>
               Deployment Date:{" "}
               {release.staging?.deployment_date
@@ -123,8 +134,15 @@ const ReleaseDetails = () => {
 
         {/* Production Environment */}
         <Box mt={2}>
-          <Paper elevation={1} sx={{ p: 2 }}>
-            <Typography variant='h6'>Production</Typography>
+          <Paper
+            elevation={1}
+            sx={{
+              p: 2,
+              backgroundColor: "green", // Set background color to green
+              color: "white", // Ensure text is visible
+            }}
+          >
+            <Typography variant="h6">Production</Typography>
             <Typography>
               Deployment Date:{" "}
               {release.production?.deployment_date
@@ -142,24 +160,24 @@ const ReleaseDetails = () => {
 
         <Box mt={4}>
           {success && (
-            <Alert severity='success' sx={{ mb: 2 }}>
+            <Alert severity="success" sx={{ mb: 2 }}>
               {success}
             </Alert>
           )}
-          <Stack direction='row' spacing={2} justifyContent='flex-end'>
+          <Stack direction="row" spacing={2} justifyContent="flex-end">
             <Button
               disabled={loading}
-              variant='contained'
-              color='primary'
+              variant="contained"
+              color="primary"
               onClick={handleGenerateDocument}
             >
               {loading ? "Generating..." : "Generate Document"}
             </Button>
-            <Button variant='contained' color='secondary' onClick={handleEdit}>
+            <Button variant="contained" color="secondary" onClick={handleEdit}>
               Edit
             </Button>
 
-            <Button variant='outlined' color='secondary' onClick={handleBack}>
+            <Button variant="outlined" color="secondary" onClick={handleBack}>
               Back
             </Button>
           </Stack>

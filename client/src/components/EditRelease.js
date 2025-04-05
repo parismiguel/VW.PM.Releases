@@ -395,8 +395,6 @@ const EditRelease = () => {
     }
 
     try {
-      await validateReleaseVersion(release.release_version);
-
       const updatedRelease = {
         ...release,
         prerequisiteData,

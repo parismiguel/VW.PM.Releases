@@ -47,7 +47,7 @@ router.post("/", async (req, res) => {
   if (existingRelease) {
     return res.status(400).json({ message: "Release version already exists" });
   }
-  
+
   try {
     const release = new Release({
       product_name: req.body.product_name,
@@ -78,6 +78,15 @@ router.post("/", async (req, res) => {
 // Update an existing release
 router.put("/:id", async (req, res) => {
   try {
+    const existingRelease = await Release.findOne({
+      release_version: req.body.release_version,
+      _id: { $ne: req.params.id }, // Exclude the current release ID
+    });
+
+    if (existingRelease) {
+      return res.status(400).json({ message: "Release version already exists" });
+    }
+    
     const release = await Release.findById(req.params.id);
     if (!release) return res.status(404).json({ message: "Release not found" });
 

@@ -154,6 +154,12 @@ const EditRelease = () => {
     fetchRelease();
   }, [id]);
 
+  const isGoNoGoValid = () => {
+    return Object.values(goNoGo).every((group) =>
+      Object.values(group).every((role) => role.go === true)
+    );
+  };
+
   const handleBack = () => navigate(`/releases/${id}`);
 
   const handleTabChange = (event, newValue) => setTabValue(newValue);
@@ -167,6 +173,13 @@ const EditRelease = () => {
     if (name === "release_version") {
       const error = validateSemver(value);
       setSemverError(error);
+    }
+
+    if (name === "status" && value === "Completed") {
+      if (!isGoNoGoValid()) {
+        toast.error("All Go / No Go checkboxes must be true to set status to Completed.");
+        return;
+      }
     }
 
     setRelease({ ...release, [name]: value });

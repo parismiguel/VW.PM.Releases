@@ -16,7 +16,7 @@ mongoose
 
 // Middleware
 app.use(express.json());
-app.use(cors({ origin: "http://localhost:3000" })); // Restringir a frontend local
+app.use(cors({ origin: process.env.FRONTEND_URL })); // Restringir a frontend local
 
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store');

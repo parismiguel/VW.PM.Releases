@@ -1,6 +1,6 @@
 import React from "react";
 import { AuthProvider } from "./AuthContext";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
 import PrivateRoute from "./PrivateRoute";
 import Dashboard from "./components/Dashboard";
 import Login from "./components/Login";
@@ -41,6 +41,7 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Router>
     </AuthProvider>

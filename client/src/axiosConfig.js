@@ -1,19 +1,20 @@
-import axios from 'axios';
+import axios from "axios";
 
 const instance = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: process.env.REACT_APP_API_BASE_URL,
+  withCredentials: true,
 });
 
 instance.interceptors.request.use(
   (config) => {
-    const auth = localStorage.getItem('auth');
+    const auth = localStorage.getItem("auth"); // Retrieve Basic Auth credentials
     if (auth) {
-      config.headers['Authorization'] = `Basic ${auth}`;
+      config.headers["Authorization"] = `Basic ${auth}`;
     }
     return config;
   },
   (error) => {
-    console.error('Request interceptor error:', error);
+    console.error("Request interceptor error:", error);
     return Promise.reject(error);
   }
 );
@@ -21,7 +22,7 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('Response interceptor error:', error);
+    console.error("Response interceptor error:", error);
     return Promise.reject(error);
   }
 );

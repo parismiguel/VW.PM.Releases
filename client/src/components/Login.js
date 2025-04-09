@@ -1,45 +1,44 @@
-import React, { useState, useContext } from 'react';
-import axiosInstance from '../axiosConfig';
-import { AuthContext } from '../AuthContext';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
 import {
   Container,
   Box,
   Typography,
-  TextField,
   Button,
-  Paper,
   Avatar,
-  CssBaseline
-} from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+  CssBaseline,
+  Paper,
+  TextField,
+} from "@mui/material";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import axiosInstance from "../axiosConfig";
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const authHeader = 'Basic ' + btoa(`${username}:${password}`);
-      const response = await axiosInstance.post('/api/login', {}, {
-        headers: {
-          'Authorization': authHeader
-        }
+      const response = await axiosInstance.post("/auth/login", {
+        username,
+        password,
       });
-
-      if (response.data.success) {
-        localStorage.setItem('auth', btoa(`${username}:${password}`));
-        login(response.data.user);
-        navigate('/');
-      }
+  
+      // Store OIDC token (if needed)
+      localStorage.setItem("oidcToken", response.data.token);
+  
+      // Store Basic Authentication credentials for API requests
+      const basicAuth = btoa(
+        `${process.env.REACT_APP_BASIC_AUTH_USER}:${process.env.REACT_APP_BASIC_AUTH_PASS}`
+      );
+      localStorage.setItem("auth", basicAuth);
+  
+      // Redirect to the OIDC flow
+      window.location.href = response.data.redirectUrl;
     } catch (err) {
-      setError('Login failed. Please check your credentials.');
-      console.error('Login error:', err);
+      console.error("Login failed:", err);
+      setError("Invalid username or password. Please try again.");
     }
   };
 
@@ -49,58 +48,51 @@ const Login = () => {
       <Box
         sx={{
           marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
+        <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Uprise Release Tracker - Login
+          Login
         </Typography>
-        <Paper elevation={3} sx={{ p: 3, mt: 2, width: '100%' }}>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
+        <Paper elevation={3} sx={{ p: 3, mt: 2, width: "100%" }}>
+          <form onSubmit={handleLogin}>
             <TextField
-              margin="normal"
-              required
               fullWidth
-              id="username"
               label="Username"
-              name="username"
-              autoComplete="username"
-              autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              required
+              sx={{ mb: 2 }}
             />
             <TextField
-              margin="normal"
-              required
               fullWidth
-              name="password"
               label="Password"
               type="password"
-              id="password"
-              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              required
+              sx={{ mb: 2 }}
             />
             {error && (
-              <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+              <Typography color="error" sx={{ mb: 2 }}>
                 {error}
               </Typography>
             )}
             <Button
-              type="submit"
               fullWidth
               variant="contained"
               color="primary"
+              type="submit"
               sx={{ mt: 3, mb: 2 }}
             >
-              Sign In
+              Login
             </Button>
-          </Box>
+          </form>
         </Paper>
       </Box>
     </Container>

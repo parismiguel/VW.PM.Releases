@@ -1,4 +1,5 @@
 const express = require("express");
+const axios = require("axios");
 const mongoose = require("mongoose");
 const path = require("path");
 const cors = require("cors");
@@ -99,7 +100,6 @@ app.get("/auth/login", (req, res) => {
   // Set a cookie to store the state for validation later
   res.cookie(`Uprise.${state}`, state, {
     httpOnly: true,
-    // sameSite: "Lax", // Ensures the cookie is sent with cross-origin requests
     secure: process.env.NODE_ENV === "production", // Use secure cookies in production
   });
   
@@ -206,7 +206,7 @@ app.get("/error", (req, res) => {
 // Protegemos solo las rutas de releases con autenticación básica
 app.use("/api/releases", basicAuth({
   users: { [process.env.BASIC_AUTH_USER]: process.env.BASIC_AUTH_PASS },
-  challenge: true,
+  challenge: false,
 }), require("./routes/releases"));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

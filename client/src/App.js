@@ -8,6 +8,7 @@ import ReleaseDetails from "./components/ReleaseDetails";
 import CreateRelease from "./components/CreateRelease";
 import EditRelease from "./components/EditRelease";
 import Header from "./components/Header";
+import Error from "./components/Error";
 
 function App() {
   return (
@@ -17,6 +18,8 @@ function App() {
         <Routes>
           <Route path='/' element={<Dashboard />} />
           <Route path='/login' element={<Login />} />
+          <Route path="/error" element={<Error />} />
+          
           <Route
             path='/releases/:id'
             element={

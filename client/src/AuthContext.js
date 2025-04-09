@@ -7,15 +7,19 @@ export function AuthProvider({ children }) {
 
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem('auth', btoa(`${userData.username}:${userData.password}`));
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem("auth", btoa(
+      `${process.env.REACT_APP_BASIC_AUTH_USER}:${process.env.REACT_APP_BASIC_AUTH_PASS}`
+    ));
+    localStorage.setItem("user", JSON.stringify(userData));
   };
 
-  const logout = () => {
+  const logout = (navigate) => {
     setUser(null);
-    localStorage.removeItem('auth');
-    localStorage.removeItem('user');
+    localStorage.removeItem("auth");
+    localStorage.removeItem("user");
+    navigate('/login'); // Redirect to the login page
   };
+
 
   useEffect(() => {
     const auth = localStorage.getItem('auth');

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { AuthContext } from "../AuthContext";
 import {
   Container,
   Box,
@@ -16,6 +17,7 @@ const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const { login } = useContext(AuthContext); // Access the login function from AuthContext
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -34,6 +36,9 @@ const Login = () => {
       );
       localStorage.setItem("auth", basicAuth);
   
+      // Update the AuthContext with the logged-in user
+      login({ username });
+
       // Redirect to the OIDC flow
       window.location.href = response.data.redirectUrl;
     } catch (err) {

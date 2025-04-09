@@ -2,7 +2,6 @@
 function authenticateToken(req, res, next) {
     const token = req.headers['authorization'];
   
-    debugger
     if (token == null) return res.status(401).json({ message: 'Unauthorized' });
   
     // Verify token (assuming JWT)

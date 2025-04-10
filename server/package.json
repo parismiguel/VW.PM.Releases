@@ -28,7 +28,7 @@
     "passport-oauth2": "^1.8.0",
     "passport-openidconnect": "^0.1.2",
     "pizzip": "^3.1.8",
-    "sharp": "^0.30.0"
+    "sharp": "^0.32.6"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

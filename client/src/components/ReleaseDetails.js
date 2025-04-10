@@ -34,25 +34,46 @@ const ReleaseDetails = () => {
     navigate(`/edit/${id}`); // Navigate to the edit page for this release
   };
 
+  const downloadFile = (response, release, setSuccess) => {
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    const timestamp = new Date().toISOString().replace(/[-:T]/g, "").slice(0, 15);
+    link.setAttribute(
+      "download",
+      `${release.product_name}_${release.release_version}_${timestamp}.docx`
+    );
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setSuccess("Document downloaded successfully");
+    setTimeout(() => setSuccess(""), 3000);
+  };
+
   const handleGenerateDocument = async () => {
     setLoading(true);
     try {
       const response = await axiosInstance.get(`/api/releases/${id}/document`, {
         responseType: "blob", // Important for file download
       });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `${release.product_name}_${release.release_version}.docx`
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      downloadFile(response, release, setSuccess); // Clear after 3s
+    } catch (err) {
+      console.error("Error downloading document:", err);
+      alert("Failed to generate document");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      setSuccess("Document downloaded successfully");
-      setTimeout(() => setSuccess(""), 3000); // Clear after 3s
+  
+  const handleGenerateDocumentV2 = async () => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get(`/api/releases/${id}/document-new`, {
+        responseType: "blob", // Important for file download
+      });
+      downloadFile(response, release, setSuccess); // Clear after 3s
     } catch (err) {
       console.error("Error downloading document:", err);
       alert("Failed to generate document");
@@ -64,15 +85,15 @@ const ReleaseDetails = () => {
   if (!release) return <Typography>Loading...</Typography>;
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth='md'>
       <Box mt={4} mb={4}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant='h4' gutterBottom>
           {release.product_name} - {release.release_version}
         </Typography>
 
         <Box mt={2}>
           <Paper elevation={1} sx={{ p: 2 }}>
-            <Typography variant="h6">Common Information</Typography>
+            <Typography variant='h6'>Common Information</Typography>
             <Typography>Type: {release.release_type}</Typography>
             <Typography>Status: {release.status}</Typography>
             <Typography>
@@ -80,8 +101,8 @@ const ReleaseDetails = () => {
               {release.jira_release_filter ? (
                 <a
                   href={release.jira_release_filter}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target='_blank'
+                  rel='noopener noreferrer'
                 >
                   {release.jira_release_filter}
                 </a>
@@ -94,7 +115,7 @@ const ReleaseDetails = () => {
 
         <Box mt={2}>
           <Paper elevation={1} sx={{ p: 2 }}>
-            <Typography variant="h6">Audit Information</Typography>
+            <Typography variant='h6'>Audit Information</Typography>
             <Typography>
               Created At: {new Date(release.createdAt).toLocaleString()}
             </Typography>
@@ -118,7 +139,7 @@ const ReleaseDetails = () => {
               color: "white", // Ensure text is visible
             }}
           >
-            <Typography variant="h6">Staging</Typography>
+            <Typography variant='h6'>Staging</Typography>
             <Typography>
               Deployment Date:{" "}
               {release.staging?.deployment_date
@@ -142,7 +163,7 @@ const ReleaseDetails = () => {
               color: "white", // Ensure text is visible
             }}
           >
-            <Typography variant="h6">Production</Typography>
+            <Typography variant='h6'>Production</Typography>
             <Typography>
               Deployment Date:{" "}
               {release.production?.deployment_date
@@ -160,24 +181,34 @@ const ReleaseDetails = () => {
 
         <Box mt={4}>
           {success && (
-            <Alert severity="success" sx={{ mb: 2 }}>
+            <Alert severity='success' sx={{ mb: 2 }}>
               {success}
             </Alert>
           )}
-          <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Stack direction='row' spacing={2} justifyContent='flex-end'>
             <Button
               disabled={loading}
-              variant="contained"
-              color="primary"
+              variant='contained'
+              color='primary'
               onClick={handleGenerateDocument}
             >
               {loading ? "Generating..." : "Generate Document"}
             </Button>
-            <Button variant="contained" color="secondary" onClick={handleEdit}>
+
+            <Button
+              disabled={loading}
+              variant='contained'
+              color='primary'
+              onClick={handleGenerateDocumentV2}
+            >
+              {loading ? "Generating..." : "Generate Document V2"}
+            </Button>
+
+            <Button variant='contained' color='secondary' onClick={handleEdit}>
               Edit
             </Button>
 
-            <Button variant="outlined" color="secondary" onClick={handleBack}>
+            <Button variant='outlined' color='secondary' onClick={handleBack}>
               Back
             </Button>
           </Stack>

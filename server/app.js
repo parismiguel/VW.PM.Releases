@@ -14,6 +14,8 @@ const cookieParser = require("cookie-parser");
 
 require('dotenv').config();
 
+const screenshotsRouter = require("./routes/screenshots");
+
 // MongoDB Connection
 mongoose
   .connect("mongodb://localhost:27017/uprise-releases")
@@ -210,6 +212,8 @@ app.use("/api/releases", basicAuth({
 }), require("./routes/releases"));
 
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+app.use("/api/releases", screenshotsRouter);
 
 // Serve static files from client build in production
 if (process.env.NODE_ENV === 'production') {

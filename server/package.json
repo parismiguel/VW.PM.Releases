@@ -8,12 +8,13 @@
     "dev": "nodemon --inspect app.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Paris Pantigoso",
   "license": "ISC",
   "dependencies": {
     "axios": "^1.8.4",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "docx": "^9.3.0",
     "docxtemplater": "^3.61.0",
     "docxtemplater-image-module-free": "^1.1.1",
     "dotenv": "^16.4.7",
@@ -26,7 +27,8 @@
     "passport": "^0.7.0",
     "passport-oauth2": "^1.8.0",
     "passport-openidconnect": "^0.1.2",
-    "pizzip": "^3.1.8"
+    "pizzip": "^3.1.8",
+    "sharp": "^0.30.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

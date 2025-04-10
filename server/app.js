@@ -189,7 +189,7 @@ app.post("/Login/idcallback", async (req, res) => {
   console.log("Session data:", req.session);
 
   // Redirect to the frontend after successful authentication
-  res.redirect(`${process.env.FRONTEND_URL}/`);
+  res.redirect(`${process.env.FRONTEND_URL}`);
 });
 
 // OIDC Logout Route
@@ -202,8 +202,6 @@ app.get("/auth/logout", (req, res) => {
 app.get("/error", (req, res) => {
   res.status(400).send("An error occurred during login. Please try again.");
 });
-
-
 
 // Protegemos solo las rutas de releases con autenticación básica
 app.use("/api/releases", basicAuth({

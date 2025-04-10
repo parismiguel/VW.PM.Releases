@@ -9,15 +9,20 @@ import {
   CssBaseline,
   Paper,
   TextField,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import axiosInstance from "../axiosConfig";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const { login } = useContext(AuthContext); // Access the login function from AuthContext
+  const { login } = useContext(AuthContext);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -26,18 +31,8 @@ const Login = () => {
         username,
         password,
       });
-  
-      // Store OIDC token (if needed)
-      localStorage.setItem("oidcToken", response.data.token);
-  
-      // Store Basic Authentication credentials for API requests
-      const basicAuth = btoa(
-        `${process.env.REACT_APP_BASIC_AUTH_USER}:${process.env.REACT_APP_BASIC_AUTH_PASS}`
-      );
-      localStorage.setItem("auth", basicAuth);
-  
-      // Update the AuthContext with the logged-in user
-      login({ username });
+
+      login({response});
 
       // Redirect to the OIDC flow
       window.location.href = response.data.redirectUrl;
@@ -45,6 +40,10 @@ const Login = () => {
       console.error("Login failed:", err);
       setError("Invalid username or password. Please try again.");
     }
+  };
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
   };
 
   return (
@@ -77,11 +76,23 @@ const Login = () => {
             <TextField
               fullWidth
               label="Password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               sx={{ mb: 2 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={handleTogglePasswordVisibility}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             {error && (
               <Typography color="error" sx={{ mb: 2 }}>

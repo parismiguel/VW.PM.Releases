@@ -136,15 +136,13 @@ const DeploymentValidationTasks = ({
                 )}
               </td>
               {!readOnly && (
-                <td style={{ textAlign: "center", padding: "8px" }}>
+                <td style={{ textAlign: "center" }}>
                   <Button
                     variant="outlined"
                     color="error"
                     onClick={() => handleDeleteTask(index)}
                     startIcon={<DeleteIcon />}
-                  >
-                    Delete
-                  </Button>
+                  ></Button>
                 </td>
               )}
             </tr>
